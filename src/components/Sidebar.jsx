@@ -3,15 +3,16 @@
 // Step navigation and session management
 // ============================================
 
-import React, { useRef } from 'react';
+import React, { useRef, memo } from 'react';
 import { COLORS } from '../constants/colors.js';
 import { STEPS, PHASES } from '../constants/steps.js';
 import { styles } from '../styles/appStyles.js';
 
 /**
  * Sidebar with step navigation and session controls
+ * Memoized to prevent re-renders when input content changes
  */
-export const Sidebar = ({
+const SidebarComponent = ({
   currentStep,
   stepOutputs,
   completedSteps,
@@ -39,21 +40,22 @@ export const Sidebar = ({
     event.target.value = '';
   };
 
+  const hasContent = completedSteps > 0 || inputContent.trim();
+
   return (
     <aside
       id="navigation-sidebar"
-      role="navigation"
       aria-label="Sprint steps navigation"
       className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}
       style={styles.sidebar}
     >
-      <div className="sidebar-card" style={styles.sidebarCard}>
+      <nav className="sidebar-card" style={styles.sidebarCard}>
         <div style={styles.sidebarHeader}>
           <h2 style={styles.sidebarTitle}>Steps</h2>
         </div>
-        <div style={styles.stepsContainer}>
+        <div style={styles.stepsContainer} role="list">
           {PHASES.map(phase => (
-            <div key={phase} style={styles.phaseGroup}>
+            <div key={phase} style={styles.phaseGroup} role="group" aria-label={`${phase} phase`}>
               <div style={{ ...styles.phaseLabel, backgroundColor: COLORS.phases[phase].bg }}>
                 {phase}
               </div>
@@ -64,17 +66,23 @@ export const Sidebar = ({
                   <button
                     key={step.id}
                     onClick={() => onStepSelect(step.id)}
+                    role="listitem"
+                    aria-current={isActive ? 'step' : undefined}
+                    aria-label={`Step ${step.id}: ${step.name}${isComplete ? ' (completed)' : ''}`}
                     style={{
                       ...styles.stepButton,
                       ...(isActive ? { backgroundColor: COLORS.phases[phase].light } : {}),
                       ...(isComplete && !isActive ? styles.stepButtonComplete : {}),
                     }}
                   >
-                    <span style={{
-                      ...styles.stepNumber,
-                      backgroundColor: isComplete ? COLORS.success : isActive ? COLORS.phases[phase].bg : COLORS.border,
-                      color: isComplete || isActive ? COLORS.white : COLORS.textSecondary,
-                    }}>
+                    <span
+                      style={{
+                        ...styles.stepNumber,
+                        backgroundColor: isComplete ? COLORS.success : isActive ? COLORS.phases[phase].bg : COLORS.border,
+                        color: isComplete || isActive ? COLORS.white : COLORS.textSecondary,
+                      }}
+                      aria-hidden="true"
+                    >
                       {isComplete ? '✓' : step.id}
                     </span>
                     <span style={styles.stepName}>{step.name}</span>
@@ -88,14 +96,26 @@ export const Sidebar = ({
         {/* Download Buttons */}
         {completedSteps > 0 && (
           <div style={{ padding: '16px', borderTop: `1px solid ${COLORS.border}` }}>
-            <button onClick={onDownloadAllAsZip} style={styles.downloadAllButton}>
+            <button
+              onClick={onDownloadAllAsZip}
+              style={styles.downloadAllButton}
+              aria-label="Download all outputs as ZIP bundle"
+            >
               ↓ ZIP Bundle
             </button>
             <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-              <button onClick={onDownloadAllOutputs} style={{ ...styles.downloadAllButton, flex: 1, backgroundColor: COLORS.primaryLight }}>
+              <button
+                onClick={onDownloadAllOutputs}
+                style={{ ...styles.downloadAllButton, flex: 1, backgroundColor: COLORS.primaryLight }}
+                aria-label="Download all outputs as Markdown"
+              >
                 ↓ MD
               </button>
-              <button onClick={onDownloadAllOutputsAsHtml} style={{ ...styles.downloadAllButton, flex: 1, backgroundColor: COLORS.primaryAccent }}>
+              <button
+                onClick={onDownloadAllOutputsAsHtml}
+                style={{ ...styles.downloadAllButton, flex: 1, backgroundColor: COLORS.primaryAccent }}
+                aria-label="Download all outputs as HTML"
+              >
                 ↓ HTML
               </button>
             </div>
@@ -113,11 +133,13 @@ export const Sidebar = ({
             accept=".json"
             onChange={handleFileChange}
             style={{ display: 'none' }}
+            aria-hidden="true"
           />
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={onExportSession}
               disabled={completedSteps === 0}
+              aria-label="Export session to JSON file"
               style={{
                 flex: 1,
                 padding: '10px',
@@ -134,6 +156,7 @@ export const Sidebar = ({
             </button>
             <button
               onClick={handleImportClick}
+              aria-label="Import session from JSON file"
               style={{
                 flex: 1,
                 padding: '10px',
@@ -151,33 +174,41 @@ export const Sidebar = ({
           </div>
           <button
             onClick={onClearSession}
-            disabled={completedSteps === 0 && !inputContent.trim()}
+            disabled={!hasContent}
+            aria-label="Clear all session data"
             style={{
               width: '100%',
               marginTop: '8px',
               padding: '10px',
               fontSize: '12px',
               fontWeight: '600',
-              backgroundColor: (completedSteps > 0 || inputContent.trim()) ? '#FEF2F2' : COLORS.borderLight,
-              color: (completedSteps > 0 || inputContent.trim()) ? COLORS.error : COLORS.textMuted,
-              border: `1px solid ${(completedSteps > 0 || inputContent.trim()) ? '#FECACA' : COLORS.border}`,
+              backgroundColor: hasContent ? '#FEF2F2' : COLORS.borderLight,
+              color: hasContent ? COLORS.error : COLORS.textMuted,
+              border: `1px solid ${hasContent ? '#FECACA' : COLORS.border}`,
               borderRadius: '8px',
-              cursor: (completedSteps > 0 || inputContent.trim()) ? 'pointer' : 'not-allowed',
+              cursor: hasContent ? 'pointer' : 'not-allowed',
             }}
           >
             Clear Session
           </button>
           {/* Auto-save indicator */}
-          <div style={{
-            marginTop: '12px',
-            fontSize: '11px',
-            color: COLORS.textMuted,
-            textAlign: 'center',
-          }}>
+          <div
+            style={{
+              marginTop: '12px',
+              fontSize: '11px',
+              color: COLORS.textMuted,
+              textAlign: 'center',
+            }}
+            role="status"
+            aria-live="polite"
+          >
             Auto-saving enabled
           </div>
         </div>
-      </div>
+      </nav>
     </aside>
   );
 };
+
+// Memoize to prevent re-renders when unrelated state changes
+export const Sidebar = memo(SidebarComponent);

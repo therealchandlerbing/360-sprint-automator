@@ -3,13 +3,14 @@
 // Main action button to process current step
 // ============================================
 
-import React from 'react';
+import React, { memo } from 'react';
 import { styles } from '../styles/appStyles.js';
 
 /**
  * Process step execution button
+ * Memoized to prevent unnecessary re-renders
  */
-export const ProcessButton = ({
+const ProcessButtonComponent = ({
   currentStep,
   stepName,
   isProcessing,
@@ -21,6 +22,8 @@ export const ProcessButton = ({
       className="process-button"
       onClick={onClick}
       disabled={isDisabled}
+      aria-busy={isProcessing}
+      aria-label={isProcessing ? `Processing Step ${currentStep}` : `Execute Step ${currentStep}: ${stepName}`}
       style={{
         ...styles.processButton,
         ...(isDisabled ? styles.processButtonDisabled : {}),
@@ -28,7 +31,7 @@ export const ProcessButton = ({
     >
       {isProcessing ? (
         <>
-          <div style={styles.spinner} />
+          <div style={styles.spinner} aria-hidden="true" />
           Processing Step {currentStep}...
         </>
       ) : (
@@ -37,3 +40,6 @@ export const ProcessButton = ({
     </button>
   );
 };
+
+// Memoize to prevent re-renders when unrelated state changes
+export const ProcessButton = memo(ProcessButtonComponent);

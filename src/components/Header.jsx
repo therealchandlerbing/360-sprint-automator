@@ -3,15 +3,16 @@
 // Top header with logo, title, and progress
 // ============================================
 
-import React from 'react';
+import React, { memo } from 'react';
 import { COLORS } from '../constants/colors.js';
 import { STEPS } from '../constants/steps.js';
 import { styles } from '../styles/appStyles.js';
 
 /**
  * Application header with branding and progress indicator
+ * Memoized to prevent re-renders when input content changes
  */
-export const Header = ({
+const HeaderComponent = ({
   completedSteps,
   isMobileMenuOpen,
   onToggleMobileMenu,
@@ -19,7 +20,7 @@ export const Header = ({
   const progressPercent = Math.round((completedSteps / STEPS.length) * 100);
 
   return (
-    <header style={styles.header}>
+    <header style={styles.header} role="banner">
       <div className="header-inner" style={styles.headerInner}>
         <div style={styles.logoSection}>
           {/* Mobile Menu Button */}
@@ -45,16 +46,23 @@ export const Header = ({
               {isMobileMenuOpen ? '✕' : '☰'}
             </span>
           </button>
-          <div className="logo" style={styles.logo}>V</div>
+          <div className="logo" style={styles.logo} aria-hidden="true">V</div>
           <div>
             <h1 className="header-title" style={styles.headerTitle}>VIANEO Sprint Automator</h1>
             <p className="header-subtitle" style={styles.headerSubtitle}>Evidence-Based Business Validation</p>
           </div>
         </div>
-        <div className="progress-section" style={styles.progressSection}>
+        <div className="progress-section" style={styles.progressSection} role="status" aria-live="polite">
           <div style={styles.progressLabel}>Sprint Progress</div>
           <div style={styles.progressValue}>{completedSteps} of {STEPS.length} steps</div>
-          <div style={styles.progressBar}>
+          <div
+            style={styles.progressBar}
+            role="progressbar"
+            aria-valuenow={completedSteps}
+            aria-valuemin={0}
+            aria-valuemax={STEPS.length}
+            aria-label={`${completedSteps} of ${STEPS.length} steps completed`}
+          >
             <div style={{ ...styles.progressFill, width: `${progressPercent}%` }} />
           </div>
         </div>
@@ -62,3 +70,6 @@ export const Header = ({
     </header>
   );
 };
+
+// Memoize to prevent re-renders when unrelated state changes
+export const Header = memo(HeaderComponent);

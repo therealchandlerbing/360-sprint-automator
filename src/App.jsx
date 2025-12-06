@@ -294,7 +294,7 @@ export default function VianeoSprintAutomator() {
     }
   }, [stepOutputs, projectName, organizationBranch]);
 
-  // Copy output to clipboard
+  // Copy output to clipboard (modern API only)
   const copyToClipboard = useCallback(async (stepId) => {
     const output = stepOutputs[stepId];
     if (!output) return;
@@ -303,26 +303,9 @@ export default function VianeoSprintAutomator() {
       await navigator.clipboard.writeText(output);
       setCopyFeedback(stepId);
       setTimeout(() => setCopyFeedback(null), 2000);
-    } catch {
-      try {
-        const textarea = document.createElement('textarea');
-        textarea.value = output;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        const success = document.execCommand('copy');
-        document.body.removeChild(textarea);
-        if (success) {
-          setCopyFeedback(stepId);
-          setTimeout(() => setCopyFeedback(null), 2000);
-        } else {
-          setError('Failed to copy to clipboard');
-        }
-      } catch (fallbackErr) {
-        console.error('Clipboard fallback failed:', fallbackErr);
-        setError('Failed to copy to clipboard');
-      }
+    } catch (err) {
+      console.error('Clipboard copy failed:', err);
+      setError('Failed to copy to clipboard. Please use HTTPS or localhost.');
     }
   }, [stepOutputs]);
 

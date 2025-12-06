@@ -3,14 +3,15 @@
 // Previous/Next step navigation
 // ============================================
 
-import React from 'react';
+import React, { memo } from 'react';
 import { STEPS } from '../constants/steps.js';
 import { styles } from '../styles/appStyles.js';
 
 /**
  * Step navigation buttons
+ * Memoized to prevent unnecessary re-renders
  */
-export const Navigation = ({
+const NavigationComponent = ({
   currentStep,
   canProceed,
   onPrevious,
@@ -20,10 +21,11 @@ export const Navigation = ({
   const isLastStep = currentStep >= STEPS.length - 1;
 
   return (
-    <div className="nav-buttons" style={styles.navigation}>
+    <nav className="nav-buttons" style={styles.navigation} aria-label="Step navigation">
       <button
         onClick={onPrevious}
         disabled={isFirstStep}
+        aria-label={isFirstStep ? 'No previous step' : `Go to Step ${currentStep - 1}`}
         style={{
           ...styles.navButton,
           ...styles.navButtonSecondary,
@@ -35,6 +37,13 @@ export const Navigation = ({
       <button
         onClick={onNext}
         disabled={!canProceed || isLastStep}
+        aria-label={
+          isLastStep
+            ? 'No next step'
+            : !canProceed
+              ? 'Complete current step to proceed'
+              : `Go to Step ${currentStep + 1}`
+        }
         style={{
           ...styles.navButton,
           ...styles.navButtonPrimary,
@@ -43,6 +52,9 @@ export const Navigation = ({
       >
         Next Step →
       </button>
-    </div>
+    </nav>
   );
 };
+
+// Memoize to prevent re-renders when unrelated state changes
+export const Navigation = memo(NavigationComponent);
