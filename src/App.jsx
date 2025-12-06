@@ -813,6 +813,58 @@ export default function VianeoSprintAutomator() {
     return context;
   }, [stepOutputs]);
 
+  // API call with exponential backoff retry logic
+  const callClaudeAPI = useCallback(async (systemPrompt, userPrompt, addLogFn) => {
+    const maxRetries = 3;
+    const baseDelay = 2000; // 2 seconds
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          addLogFn(`Retry attempt ${attempt}/${maxRetries} after ${delay/1000}s delay...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+
+        const response = await fetch("/api/claude", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 8000,
+            system: systemPrompt,
+            messages: [{ role: "user", content: userPrompt }],
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || `API error: ${response.status}`;
+
+          // Retry on rate limit (429) or server errors (5xx)
+          if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) {
+            addLogFn(`${errorMessage} - will retry...`);
+            continue;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        return await response.json();
+      } catch (err) {
+        if (attempt === maxRetries) {
+          throw err;
+        }
+        // Network errors - retry
+        if (err.name === 'TypeError' || err.message.includes('fetch')) {
+          addLogFn(`Network error - will retry...`);
+          continue;
+        }
+        throw err;
+      }
+    }
+  }, []);
+
   const processStep = useCallback(async () => {
     if (currentStep === 1 && !organizationBranch) {
       setShowBranchSelector(true);
@@ -831,7 +883,7 @@ export default function VianeoSprintAutomator() {
     try {
       const promptConfig = STEP_PROMPTS[currentStep];
       const context = buildContext(currentStep);
-      
+
       let userPrompt = promptConfig.userPromptTemplate;
       if (currentStep === 0) {
         userPrompt = userPrompt.replace('{INPUT_CONTENT}', inputContent);
@@ -846,20 +898,7 @@ export default function VianeoSprintAutomator() {
 
       addLog('Sending request to Claude API...');
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 8000,
-          system: promptConfig.systemPrompt,
-          messages: [{ role: "user", content: userPrompt }],
-        })
-      });
-
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
-
-      const data = await response.json();
+      const data = await callClaudeAPI(promptConfig.systemPrompt, userPrompt, addLog);
       addLog('Response received, processing...');
 
       const output = data.content.filter(item => item.type === "text").map(item => item.text).join("\n");
@@ -871,7 +910,7 @@ export default function VianeoSprintAutomator() {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentStep, inputContent, organizationBranch, buildContext, addLog]);
+  }, [currentStep, inputContent, organizationBranch, buildContext, addLog, callClaudeAPI]);
 
   const downloadOutput = useCallback((stepId) => {
     const output = stepOutputs[stepId];

@@ -22,5 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env git add .
+# Environment files (keep secrets safe!)
 .env
+.env.local
+.env.*.local
