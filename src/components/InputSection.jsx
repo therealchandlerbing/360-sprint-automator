@@ -3,9 +3,10 @@
 // File upload and text input for Step 0
 // ============================================
 
-import React, { useRef, memo } from 'react';
+import React, { useRef, useState, memo } from 'react';
 import { COLORS } from '../constants/colors.js';
 import { styles } from '../styles/appStyles.js';
+import { parseFiles } from '../utils/fileParser.js';
 
 /**
  * Input section with file upload and text area
@@ -19,19 +20,37 @@ const InputSectionComponent = ({
   onInputContentChange,
   onFileUpload,
   onRemoveFile,
+  onError,
 }) => {
   const fileInputRef = useRef(null);
+  const [isParsingFiles, setIsParsingFiles] = useState(false);
 
   const handleFileChange = async (event) => {
     const files = Array.from(event.target.files);
-    const fileData = [];
+    if (files.length === 0) return;
 
-    for (const file of files) {
-      const text = await file.text();
-      fileData.push({ name: file.name, size: file.size, content: text });
+    setIsParsingFiles(true);
+
+    try {
+      const { results, errors } = await parseFiles(files);
+
+      if (errors.length > 0 && onError) {
+        const errorMessages = errors.map(e => `${e.file}: ${e.error}`).join('\n');
+        onError(`Some files could not be parsed:\n${errorMessages}`);
+      }
+
+      if (results.length > 0) {
+        onFileUpload(results);
+      }
+    } catch (error) {
+      if (onError) {
+        onError(`Failed to parse files: ${error.message}`);
+      }
+    } finally {
+      setIsParsingFiles(false);
+      // Reset input to allow re-uploading same file
+      event.target.value = '';
     }
-
-    onFileUpload(fileData);
   };
 
   return (
@@ -62,34 +81,39 @@ const InputSectionComponent = ({
           type="file"
           ref={fileInputRef}
           multiple
-          accept=".txt,.md,.pdf,.doc,.docx"
+          accept=".txt,.md,.pdf,.docx"
           onChange={handleFileChange}
           style={{ display: 'none' }}
           aria-hidden="true"
           id="file-upload-input"
+          disabled={isParsingFiles}
         />
         <div
           className="upload-zone"
-          onClick={() => fileInputRef.current?.click()}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
-          style={styles.uploadZone}
+          onClick={() => !isParsingFiles && fileInputRef.current?.click()}
+          onKeyDown={(e) => { if (!isParsingFiles && (e.key === 'Enter' || e.key === ' ')) fileInputRef.current?.click(); }}
+          style={{
+            ...styles.uploadZone,
+            ...(isParsingFiles ? { opacity: 0.6, cursor: 'wait' } : {}),
+          }}
           role="button"
-          tabIndex={0}
+          tabIndex={isParsingFiles ? -1 : 0}
           aria-label="Upload files: TXT, MD, PDF, DOCX supported"
+          aria-busy={isParsingFiles}
         >
-          <div style={styles.uploadIcon} aria-hidden="true">📄</div>
-          <div style={styles.uploadText}>Drop files or click to upload</div>
+          <div style={styles.uploadIcon} aria-hidden="true">{isParsingFiles ? '⏳' : '📄'}</div>
+          <div style={styles.uploadText}>{isParsingFiles ? 'Parsing files...' : 'Drop files or click to upload'}</div>
           <div style={styles.uploadHint}>TXT, MD, PDF, DOCX supported</div>
         </div>
 
         {uploadedFiles.length > 0 && (
           <div style={{ marginTop: '16px' }} role="list" aria-label="Uploaded files">
-            {uploadedFiles.map((file, idx) => (
-              <div key={`${file.name}-${idx}`} style={styles.fileItem} role="listitem">
+            {uploadedFiles.map((file, index) => (
+              <div key={`${file.name}-${file.lastModified || index}`} style={styles.fileItem} role="listitem">
                 <span style={styles.fileName}>{file.name}</span>
                 <span style={styles.fileSize}>{(file.size / 1024).toFixed(1)} KB</span>
                 <button
-                  onClick={() => onRemoveFile(idx)}
+                  onClick={() => onRemoveFile(index)}
                   style={styles.removeButton}
                   aria-label={`Remove file ${file.name}`}
                 >

@@ -8,7 +8,7 @@ import JSZip from 'jszip';
 
 // Constants
 import { STEPS } from './constants/steps.js';
-import { STEP_PROMPTS } from './constants/prompts.js';
+import { STEP_PROMPTS, injectDynamicValues } from './constants/prompts.js';
 import { COLORS } from './constants/colors.js';
 
 // Utilities
@@ -163,7 +163,7 @@ export default function VianeoSprintAutomator() {
 
       addLog('Sending request to Claude API...');
 
-      const data = await callClaudeAPI(promptConfig.systemPrompt, userPrompt, addLog);
+      const data = await callClaudeAPI(injectDynamicValues(promptConfig.systemPrompt), userPrompt, addLog);
       addLog('Response received, processing...');
 
       const output = data.content.filter(item => item.type === "text").map(item => item.text).join("\n");
@@ -414,6 +414,7 @@ export default function VianeoSprintAutomator() {
               onInputContentChange={setInputContent}
               onFileUpload={handleFileUpload}
               onRemoveFile={removeFile}
+              onError={setError}
             />
           )}
 

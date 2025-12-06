@@ -484,6 +484,93 @@ export const styles = {
     opacity: 0.5,
     cursor: 'not-allowed',
   },
+
+  // Mobile menu button
+  mobileMenuButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '40px',
+    height: '40px',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    marginRight: '8px',
+  },
+  mobileMenuIcon: {
+    color: COLORS.white,
+    fontSize: '20px',
+  },
+
+  // Session management buttons
+  sessionSection: {
+    padding: '16px',
+    borderTop: `1px solid ${COLORS.border}`,
+  },
+  sessionSectionLabel: {
+    fontSize: '11px',
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    marginBottom: '12px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+  },
+  sessionButtonGroup: {
+    display: 'flex',
+    gap: '8px',
+  },
+  sessionButton: {
+    flex: 1,
+    padding: '10px',
+    fontSize: '12px',
+    fontWeight: '600',
+    backgroundColor: COLORS.background,
+    color: COLORS.textPrimary,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '8px',
+    cursor: 'pointer',
+  },
+  sessionButtonDisabled: {
+    backgroundColor: COLORS.borderLight,
+    color: COLORS.textMuted,
+    cursor: 'not-allowed',
+  },
+  clearSessionButton: {
+    width: '100%',
+    marginTop: '8px',
+    padding: '10px',
+    fontSize: '12px',
+    fontWeight: '600',
+    backgroundColor: '#FEF2F2',
+    color: COLORS.error,
+    border: '1px solid #FECACA',
+    borderRadius: '8px',
+    cursor: 'pointer',
+  },
+  clearSessionButtonDisabled: {
+    backgroundColor: COLORS.borderLight,
+    color: COLORS.textMuted,
+    border: `1px solid ${COLORS.border}`,
+    cursor: 'not-allowed',
+  },
+  autoSaveIndicator: {
+    marginTop: '12px',
+    fontSize: '11px',
+    color: COLORS.textMuted,
+    textAlign: 'center',
+  },
+
+  // Download section
+  downloadSection: {
+    padding: '16px',
+    borderTop: `1px solid ${COLORS.border}`,
+  },
+  downloadButtonGroup: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '8px',
+  },
 };
 
 // CSS styles for responsive design (to be injected as a style tag)

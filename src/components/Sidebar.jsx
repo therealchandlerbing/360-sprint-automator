@@ -95,7 +95,7 @@ const SidebarComponent = ({
 
         {/* Download Buttons */}
         {completedSteps > 0 && (
-          <div style={{ padding: '16px', borderTop: `1px solid ${COLORS.border}` }}>
+          <div style={styles.downloadSection}>
             <button
               onClick={onDownloadAllAsZip}
               style={styles.downloadAllButton}
@@ -103,7 +103,7 @@ const SidebarComponent = ({
             >
               ↓ ZIP Bundle
             </button>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <div style={styles.downloadButtonGroup}>
               <button
                 onClick={onDownloadAllOutputs}
                 style={{ ...styles.downloadAllButton, flex: 1, backgroundColor: COLORS.primaryLight }}
@@ -123,8 +123,8 @@ const SidebarComponent = ({
         )}
 
         {/* Session Management */}
-        <div style={{ padding: '16px', borderTop: `1px solid ${COLORS.border}` }}>
-          <div style={{ fontSize: '11px', fontWeight: '600', color: COLORS.textMuted, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <div style={styles.sessionSection}>
+          <div style={styles.sessionSectionLabel}>
             Session
           </div>
           <input
@@ -135,21 +135,14 @@ const SidebarComponent = ({
             style={{ display: 'none' }}
             aria-hidden="true"
           />
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={styles.sessionButtonGroup}>
             <button
               onClick={onExportSession}
               disabled={completedSteps === 0}
               aria-label="Export session to JSON file"
               style={{
-                flex: 1,
-                padding: '10px',
-                fontSize: '12px',
-                fontWeight: '600',
-                backgroundColor: completedSteps > 0 ? COLORS.background : COLORS.borderLight,
-                color: completedSteps > 0 ? COLORS.textPrimary : COLORS.textMuted,
-                border: `1px solid ${COLORS.border}`,
-                borderRadius: '8px',
-                cursor: completedSteps > 0 ? 'pointer' : 'not-allowed',
+                ...styles.sessionButton,
+                ...(completedSteps === 0 ? styles.sessionButtonDisabled : {}),
               }}
             >
               Export
@@ -157,17 +150,7 @@ const SidebarComponent = ({
             <button
               onClick={handleImportClick}
               aria-label="Import session from JSON file"
-              style={{
-                flex: 1,
-                padding: '10px',
-                fontSize: '12px',
-                fontWeight: '600',
-                backgroundColor: COLORS.background,
-                color: COLORS.textPrimary,
-                border: `1px solid ${COLORS.border}`,
-                borderRadius: '8px',
-                cursor: 'pointer',
-              }}
+              style={styles.sessionButton}
             >
               Import
             </button>
@@ -176,29 +159,13 @@ const SidebarComponent = ({
             onClick={onClearSession}
             disabled={!hasContent}
             aria-label="Clear all session data"
-            style={{
-              width: '100%',
-              marginTop: '8px',
-              padding: '10px',
-              fontSize: '12px',
-              fontWeight: '600',
-              backgroundColor: hasContent ? '#FEF2F2' : COLORS.borderLight,
-              color: hasContent ? COLORS.error : COLORS.textMuted,
-              border: `1px solid ${hasContent ? '#FECACA' : COLORS.border}`,
-              borderRadius: '8px',
-              cursor: hasContent ? 'pointer' : 'not-allowed',
-            }}
+            style={hasContent ? styles.clearSessionButton : styles.clearSessionButtonDisabled}
           >
             Clear Session
           </button>
           {/* Auto-save indicator */}
           <div
-            style={{
-              marginTop: '12px',
-              fontSize: '11px',
-              color: COLORS.textMuted,
-              textAlign: 'center',
-            }}
+            style={styles.autoSaveIndicator}
             role="status"
             aria-live="polite"
           >

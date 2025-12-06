@@ -3,7 +3,7 @@
 // Delays value updates to reduce re-renders
 // ============================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * Hook to debounce a value
@@ -29,33 +29,36 @@ export const useDebounce = (value, delay = 300) => {
 
 /**
  * Hook to create a debounced callback function
+ * Uses useRef to avoid re-renders on each call
  * @param {Function} callback - The function to debounce
  * @param {number} delay - Delay in milliseconds (default: 300ms)
  * @returns {Function} The debounced callback
  */
 export const useDebouncedCallback = (callback, delay = 300) => {
-  const [timeoutId, setTimeoutId] = useState(null);
+  const callbackRef = useRef(callback);
+  const timeoutIdRef = useRef(null);
 
-  const debouncedCallback = (...args) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-
-    const newTimeoutId = setTimeout(() => {
-      callback(...args);
-    }, delay);
-
-    setTimeoutId(newTimeoutId);
-  };
+  // Keep callback ref up to date
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
       }
     };
-  }, [timeoutId]);
+  }, []);
 
-  return debouncedCallback;
+  return useCallback((...args) => {
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+    }
+
+    timeoutIdRef.current = setTimeout(() => {
+      callbackRef.current(...args);
+    }, delay);
+  }, [delay]);
 };

@@ -3,6 +3,23 @@
 // Based on GITHUB Master Vianeo Repository
 // ============================================
 
+/**
+ * Inject dynamic date values into a prompt string
+ * Replaces placeholders with current date/year values
+ * @param {string} prompt - The prompt string with placeholders
+ * @returns {string} - The prompt with injected values
+ */
+export const injectDynamicValues = (prompt) => {
+  const currentDate = new Date().toISOString().split('T')[0];
+  const currentYear = new Date().getFullYear();
+  const docId = `${currentYear}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+
+  return prompt
+    .replace(/\{\{CURRENT_DATE\}\}/g, currentDate)
+    .replace(/\{\{CURRENT_YEAR\}\}/g, currentYear)
+    .replace(/\{\{DOC_ID\}\}/g, docId);
+};
+
 export const STEP_PROMPTS = {
   0: {
     name: 'Executive Brief Extraction',
@@ -20,9 +37,9 @@ Transform raw application materials into a structured Executive Brief. You MUST 
 | Field | Value |
 |-------|-------|
 | **Project Name** | [Extract from materials] |
-| **Date Prepared** | ${new Date().toISOString().split('T')[0]} |
+| **Date Prepared** | {{CURRENT_DATE}} |
 | **Prepared By** | VIANEO Sprint Automator |
-| **Document ID** | EB-${new Date().getFullYear()}-001 |
+| **Document ID** | EB-{{DOC_ID}} |
 | **Maturity Stage** | [IDEA / PROOF / PROMISING / LAUNCH / GROWTH] |
 | **TRL Level** | [1-9] - [Brief description] |
 

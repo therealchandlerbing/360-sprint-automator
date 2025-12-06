@@ -30,19 +30,9 @@ const HeaderComponent = ({
             aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
             aria-expanded={isMobileMenuOpen}
             aria-controls="navigation-sidebar"
-            style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '40px',
-              height: '40px',
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              marginRight: '8px',
-            }}
+            style={styles.mobileMenuButton}
           >
-            <span style={{ color: COLORS.white, fontSize: '20px' }} aria-hidden="true">
+            <span style={styles.mobileMenuIcon} aria-hidden="true">
               {isMobileMenuOpen ? '✕' : '☰'}
             </span>
           </button>
