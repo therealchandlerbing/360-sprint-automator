@@ -4,20 +4,42 @@
 // ============================================
 
 /**
+ * Escape HTML entities to prevent XSS attacks
+ * @param {string} str - The string to escape
+ * @returns {string} Escaped string safe for HTML insertion
+ */
+const escapeHtml = (str) => {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
+/**
  * Generates a complete HTML document with professional styling
- * @param {string} content - The HTML content for the body
+ * @param {string} content - The HTML content for the body (should already be sanitized)
  * @param {string} title - The document title
  * @param {string} projectName - The project name
  * @param {string} stepName - The step name
  * @param {string} date - The generation date
  * @returns {string} Complete HTML document
  */
-export const HTML_TEMPLATE = (content, title, projectName, stepName, date) => `<!DOCTYPE html>
+export const HTML_TEMPLATE = (content, title, projectName, stepName, date) => {
+  // Sanitize all user-controlled inputs
+  const safeTitle = escapeHtml(title);
+  const safeProjectName = escapeHtml(projectName);
+  const safeStepName = escapeHtml(stepName);
+  const safeDate = escapeHtml(date);
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
+  <title>${safeTitle}</title>
   <style>
     :root {
       --primary: #0A2540;
@@ -205,9 +227,9 @@ export const HTML_TEMPLATE = (content, title, projectName, stepName, date) => `<
 </head>
 <body>
   <header class="doc-header">
-    <h1>${projectName}: ${stepName}</h1>
+    <h1>${safeProjectName}: ${safeStepName}</h1>
     <div class="doc-meta">
-      <span>${date}</span>
+      <span>${safeDate}</span>
       <span>VIANEO Framework</span>
       <span>Sprint Automator</span>
     </div>
@@ -222,3 +244,4 @@ export const HTML_TEMPLATE = (content, title, projectName, stepName, date) => `<
   </footer>
 </body>
 </html>`;
+};

@@ -9,7 +9,6 @@ import JSZip from 'jszip';
 // Constants
 import { STEPS } from './constants/steps.js';
 import { STEP_PROMPTS, injectDynamicValues } from './constants/prompts.js';
-import { COLORS } from './constants/colors.js';
 
 // Utilities
 import { markdownToHtml } from './utils/markdownToHtml.js';
