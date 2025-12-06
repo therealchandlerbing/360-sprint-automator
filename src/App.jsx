@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import JSZip from 'jszip';
 
 // ============================================
 // VIANEO Framework Constants & Configuration
@@ -1419,7 +1420,9 @@ export default function VianeoSprintAutomator() {
   const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [error, setError] = useState(null);
+  const [copyFeedback, setCopyFeedback] = useState(null);
   const fileInputRef = useRef(null);
+  const sessionInputRef = useRef(null);
 
   const addLog = useCallback((message) => {
     setProcessingLog(prev => [...prev, { time: new Date().toLocaleTimeString(), message }]);
@@ -1629,6 +1632,131 @@ export default function VianeoSprintAutomator() {
     URL.revokeObjectURL(url);
   }, [stepOutputs, projectName]);
 
+  // Download all outputs as ZIP bundle with manifest
+  const downloadAllAsZip = useCallback(async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const timestamp = new Date().toISOString();
+    const safeName = (projectName || 'Project').replace(/\s+/g, '_');
+
+    const zip = new JSZip();
+
+    // Add each step output as a separate file
+    const files = [];
+    Object.entries(stepOutputs)
+      .sort(([a], [b]) => parseInt(a) - parseInt(b))
+      .forEach(([stepId, output]) => {
+        const step = STEPS[parseInt(stepId)];
+        const filename = `${String(stepId).padStart(2, '0')}${step.outputFile.replace(/^_\d+/, '')}.md`;
+        zip.file(filename, output);
+        files.push({
+          step: parseInt(stepId),
+          filename: filename,
+          size: output.length
+        });
+      });
+
+    // Create manifest
+    const manifest = {
+      projectName: projectName || 'Project',
+      generatedAt: timestamp,
+      completedSteps: Object.keys(stepOutputs).map(id => parseInt(id)).sort((a, b) => a - b),
+      organizationBranch: organizationBranch,
+      totalSteps: STEPS.length,
+      files: files
+    };
+    zip.file('_manifest.json', JSON.stringify(manifest, null, 2));
+
+    // Generate and download ZIP
+    const content = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${safeName}_VIANEO_Sprint_${date}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [stepOutputs, projectName, organizationBranch]);
+
+  // Copy output to clipboard
+  const copyToClipboard = useCallback(async (stepId) => {
+    const output = stepOutputs[stepId];
+    if (!output) return;
+
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopyFeedback(stepId);
+      setTimeout(() => setCopyFeedback(null), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = output;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopyFeedback(stepId);
+      setTimeout(() => setCopyFeedback(null), 2000);
+    }
+  }, [stepOutputs]);
+
+  // Export session state as JSON
+  const exportSession = useCallback(() => {
+    const date = new Date().toISOString().split('T')[0];
+    const safeName = (projectName || 'Project').replace(/\s+/g, '_');
+
+    const sessionData = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      projectName: projectName,
+      organizationBranch: organizationBranch,
+      currentStep: currentStep,
+      stepOutputs: stepOutputs,
+      inputContent: inputContent
+    };
+
+    const blob = new Blob([JSON.stringify(sessionData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${safeName}_session_${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [projectName, organizationBranch, currentStep, stepOutputs, inputContent]);
+
+  // Import session state from JSON
+  const importSession = useCallback((event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const sessionData = JSON.parse(e.target.result);
+
+        // Validate session data
+        if (!sessionData.version || !sessionData.stepOutputs) {
+          setError('Invalid session file format');
+          return;
+        }
+
+        // Restore session state
+        if (sessionData.projectName) setProjectName(sessionData.projectName);
+        if (sessionData.organizationBranch) setOrganizationBranch(sessionData.organizationBranch);
+        if (typeof sessionData.currentStep === 'number') setCurrentStep(sessionData.currentStep);
+        if (sessionData.stepOutputs) setStepOutputs(sessionData.stepOutputs);
+        if (sessionData.inputContent) setInputContent(sessionData.inputContent);
+
+        setError(null);
+        setProcessingLog([{ time: new Date().toLocaleTimeString(), message: `Session restored from ${file.name}` }]);
+      } catch (err) {
+        setError(`Failed to import session: ${err.message}`);
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset file input
+    event.target.value = '';
+  }, []);
+
   const completedSteps = Object.keys(stepOutputs).length;
   const progressPercent = Math.round((completedSteps / STEPS.length) * 100);
   const currentStepInfo = STEPS[currentStep];
@@ -1706,11 +1834,69 @@ export default function VianeoSprintAutomator() {
                 </div>
               ))}
             </div>
+            {/* Download Buttons */}
             {completedSteps > 0 && (
-              <button onClick={downloadAllOutputs} style={styles.downloadAllButton}>
-                ↓ Download All Outputs
-              </button>
+              <div style={{ padding: '16px', borderTop: `1px solid ${COLORS.border}` }}>
+                <button onClick={downloadAllAsZip} style={styles.downloadAllButton}>
+                  ↓ Download ZIP Bundle
+                </button>
+                <button
+                  onClick={downloadAllOutputs}
+                  style={{ ...styles.downloadAllButton, marginTop: '8px', backgroundColor: COLORS.primaryLight }}
+                >
+                  ↓ Download Markdown
+                </button>
+              </div>
             )}
+
+            {/* Session Management */}
+            <div style={{ padding: '16px', borderTop: `1px solid ${COLORS.border}` }}>
+              <div style={{ fontSize: '11px', fontWeight: '600', color: COLORS.textMuted, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Session
+              </div>
+              <input
+                type="file"
+                ref={sessionInputRef}
+                accept=".json"
+                onChange={importSession}
+                style={{ display: 'none' }}
+              />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={exportSession}
+                  disabled={completedSteps === 0}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    backgroundColor: completedSteps > 0 ? COLORS.background : COLORS.borderLight,
+                    color: completedSteps > 0 ? COLORS.textPrimary : COLORS.textMuted,
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: '8px',
+                    cursor: completedSteps > 0 ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  Export
+                </button>
+                <button
+                  onClick={() => sessionInputRef.current?.click()}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    backgroundColor: COLORS.background,
+                    color: COLORS.textPrimary,
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Import
+                </button>
+              </div>
+            </div>
           </div>
         </aside>
 
@@ -1855,9 +2041,20 @@ export default function VianeoSprintAutomator() {
             <div style={{ ...styles.card, marginTop: '24px' }}>
               <div style={styles.outputHeader}>
                 <h3 style={styles.cardTitle}>Output</h3>
-                <button onClick={() => downloadOutput(currentStep)} style={styles.downloadButton}>
-                  ↓ Download Markdown
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => copyToClipboard(currentStep)}
+                    style={{
+                      ...styles.downloadButton,
+                      backgroundColor: copyFeedback === currentStep ? COLORS.success : COLORS.primaryLight,
+                    }}
+                  >
+                    {copyFeedback === currentStep ? '✓ Copied!' : '📋 Copy'}
+                  </button>
+                  <button onClick={() => downloadOutput(currentStep)} style={styles.downloadButton}>
+                    ↓ Download
+                  </button>
+                </div>
               </div>
               <div style={styles.outputContent}>
                 <pre style={styles.outputText}>{stepOutputs[currentStep]}</pre>
