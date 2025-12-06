@@ -1,5 +1,17 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import JSZip from 'jszip';
+
+// ============================================
+// Local Storage Keys for Session Persistence
+// ============================================
+const STORAGE_KEYS = {
+  PROJECT_NAME: 'vianeo_projectName',
+  INPUT_CONTENT: 'vianeo_inputContent',
+  STEP_OUTPUTS: 'vianeo_stepOutputs',
+  ORGANIZATION_BRANCH: 'vianeo_organizationBranch',
+  CURRENT_STEP: 'vianeo_currentStep',
+  LAST_SAVED: 'vianeo_lastSaved',
+};
 
 // ============================================
 // VIANEO Framework Constants & Configuration
@@ -1421,8 +1433,82 @@ export default function VianeoSprintAutomator() {
   const [projectName, setProjectName] = useState('');
   const [error, setError] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(null);
+  const [isSessionLoaded, setIsSessionLoaded] = useState(false);
   const fileInputRef = useRef(null);
   const sessionInputRef = useRef(null);
+
+  // ============================================
+  // Session Recovery: Load from localStorage on mount
+  // ============================================
+  useEffect(() => {
+    try {
+      const savedProjectName = localStorage.getItem(STORAGE_KEYS.PROJECT_NAME);
+      const savedInputContent = localStorage.getItem(STORAGE_KEYS.INPUT_CONTENT);
+      const savedStepOutputs = localStorage.getItem(STORAGE_KEYS.STEP_OUTPUTS);
+      const savedBranch = localStorage.getItem(STORAGE_KEYS.ORGANIZATION_BRANCH);
+      const savedCurrentStep = localStorage.getItem(STORAGE_KEYS.CURRENT_STEP);
+
+      if (savedProjectName) setProjectName(savedProjectName);
+      if (savedInputContent) setInputContent(savedInputContent);
+      if (savedStepOutputs) {
+        try {
+          setStepOutputs(JSON.parse(savedStepOutputs));
+        } catch {
+          // Invalid JSON, ignore
+        }
+      }
+      if (savedBranch) setOrganizationBranch(savedBranch);
+      if (savedCurrentStep) {
+        const step = parseInt(savedCurrentStep, 10);
+        if (!isNaN(step) && step >= 0 && step < STEPS.length) {
+          setCurrentStep(step);
+        }
+      }
+    } catch {
+      // localStorage not available or error, continue with defaults
+    }
+    setIsSessionLoaded(true);
+  }, []);
+
+  // ============================================
+  // Auto-save: Save to localStorage when state changes
+  // ============================================
+  useEffect(() => {
+    // Don't save until initial session is loaded to prevent overwriting
+    if (!isSessionLoaded) return;
+
+    try {
+      localStorage.setItem(STORAGE_KEYS.PROJECT_NAME, projectName);
+      localStorage.setItem(STORAGE_KEYS.INPUT_CONTENT, inputContent);
+      localStorage.setItem(STORAGE_KEYS.STEP_OUTPUTS, JSON.stringify(stepOutputs));
+      localStorage.setItem(STORAGE_KEYS.CURRENT_STEP, String(currentStep));
+      localStorage.setItem(STORAGE_KEYS.LAST_SAVED, new Date().toISOString());
+      if (organizationBranch) {
+        localStorage.setItem(STORAGE_KEYS.ORGANIZATION_BRANCH, organizationBranch);
+      }
+    } catch {
+      // localStorage not available or quota exceeded, silently fail
+    }
+  }, [isSessionLoaded, projectName, inputContent, stepOutputs, currentStep, organizationBranch]);
+
+  // ============================================
+  // Unsaved Changes Warning: Warn before closing
+  // ============================================
+  useEffect(() => {
+    const hasUnsavedWork = Object.keys(stepOutputs).length > 0 || inputContent.trim().length > 0;
+
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedWork) {
+        e.preventDefault();
+        // Modern browsers require returnValue to be set
+        e.returnValue = 'You have unsaved work. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [stepOutputs, inputContent]);
 
   const addLog = useCallback((message) => {
     setProcessingLog(prev => [...prev, { time: new Date().toLocaleTimeString(), message }]);
@@ -1757,6 +1843,31 @@ export default function VianeoSprintAutomator() {
     event.target.value = '';
   }, []);
 
+  // Clear session from localStorage and reset state
+  const clearSession = useCallback(() => {
+    if (!window.confirm('Are you sure you want to clear all session data? This cannot be undone.')) {
+      return;
+    }
+
+    // Clear localStorage
+    try {
+      Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+    } catch {
+      // localStorage not available
+    }
+
+    // Reset state
+    setProjectName('');
+    setInputContent('');
+    setStepOutputs({});
+    setCurrentStep(0);
+    setOrganizationBranch(null);
+    setUploadedFiles([]);
+    setProcessingLog([]);
+    setError(null);
+    setShowBranchSelector(false);
+  }, []);
+
   const completedSteps = Object.keys(stepOutputs).length;
   const progressPercent = Math.round((completedSteps / STEPS.length) * 100);
   const currentStepInfo = STEPS[currentStep];
@@ -1895,6 +2006,33 @@ export default function VianeoSprintAutomator() {
                 >
                   Import
                 </button>
+              </div>
+              <button
+                onClick={clearSession}
+                disabled={completedSteps === 0 && !inputContent.trim()}
+                style={{
+                  width: '100%',
+                  marginTop: '8px',
+                  padding: '10px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  backgroundColor: (completedSteps > 0 || inputContent.trim()) ? '#FEF2F2' : COLORS.borderLight,
+                  color: (completedSteps > 0 || inputContent.trim()) ? COLORS.error : COLORS.textMuted,
+                  border: `1px solid ${(completedSteps > 0 || inputContent.trim()) ? '#FECACA' : COLORS.border}`,
+                  borderRadius: '8px',
+                  cursor: (completedSteps > 0 || inputContent.trim()) ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Clear Session
+              </button>
+              {/* Auto-save indicator */}
+              <div style={{
+                marginTop: '12px',
+                fontSize: '11px',
+                color: COLORS.textMuted,
+                textAlign: 'center',
+              }}>
+                Auto-saving enabled
               </div>
             </div>
           </div>
