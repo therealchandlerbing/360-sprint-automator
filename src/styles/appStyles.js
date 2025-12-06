@@ -504,25 +504,26 @@ export const styles = {
 
   // Session management buttons
   sessionSection: {
-    padding: '16px',
+    padding: '20px 16px',
     borderTop: `1px solid ${COLORS.border}`,
+    marginTop: '8px',
   },
   sessionSectionLabel: {
     fontSize: '11px',
     fontWeight: '600',
     color: COLORS.textMuted,
-    marginBottom: '12px',
+    marginBottom: '16px',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
   },
   sessionButtonGroup: {
     display: 'flex',
-    gap: '8px',
+    gap: '10px',
   },
   sessionButton: {
     flex: 1,
-    padding: '10px',
-    fontSize: '12px',
+    padding: '12px 10px',
+    fontSize: '13px',
     fontWeight: '600',
     backgroundColor: COLORS.background,
     color: COLORS.textPrimary,
@@ -537,9 +538,9 @@ export const styles = {
   },
   clearSessionButton: {
     width: '100%',
-    marginTop: '8px',
-    padding: '10px',
-    fontSize: '12px',
+    marginTop: '12px',
+    padding: '12px 10px',
+    fontSize: '13px',
     fontWeight: '600',
     backgroundColor: '#FEF2F2',
     color: COLORS.error,
@@ -548,27 +549,35 @@ export const styles = {
     cursor: 'pointer',
   },
   clearSessionButtonDisabled: {
+    width: '100%',
+    marginTop: '12px',
+    padding: '12px 10px',
+    fontSize: '13px',
+    fontWeight: '600',
     backgroundColor: COLORS.borderLight,
     color: COLORS.textMuted,
     border: `1px solid ${COLORS.border}`,
     cursor: 'not-allowed',
   },
   autoSaveIndicator: {
-    marginTop: '12px',
+    marginTop: '16px',
+    padding: '8px',
     fontSize: '11px',
     color: COLORS.textMuted,
     textAlign: 'center',
+    backgroundColor: COLORS.background,
+    borderRadius: '6px',
   },
 
   // Download section
   downloadSection: {
-    padding: '16px',
+    padding: '20px 16px',
     borderTop: `1px solid ${COLORS.border}`,
   },
   downloadButtonGroup: {
     display: 'flex',
-    gap: '8px',
-    marginTop: '8px',
+    gap: '10px',
+    marginTop: '10px',
   },
   downloadButtonSecondary: {
     flex: 1,
