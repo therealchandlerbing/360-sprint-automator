@@ -106,14 +106,14 @@ const SidebarComponent = ({
             <div style={styles.downloadButtonGroup}>
               <button
                 onClick={onDownloadAllOutputs}
-                style={{ ...styles.downloadAllButton, flex: 1, backgroundColor: COLORS.primaryLight }}
+                style={styles.downloadButtonSecondary}
                 aria-label="Download all outputs as Markdown"
               >
                 ↓ MD
               </button>
               <button
                 onClick={onDownloadAllOutputsAsHtml}
-                style={{ ...styles.downloadAllButton, flex: 1, backgroundColor: COLORS.primaryAccent }}
+                style={styles.downloadButtonHtml}
                 aria-label="Download all outputs as HTML"
               >
                 ↓ HTML
