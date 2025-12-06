@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { model, max_tokens, system, messages } = req.body;
+    const { system, messages } = req.body;
 
     // Validate required fields
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -37,6 +37,12 @@ export default async function handler(req, res) {
         message: 'Messages array is required'
       });
     }
+
+    // Server-controlled configuration (from environment variables)
+    const modelName = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20250514';
+    const maxTokens = process.env.CLAUDE_MAX_TOKENS
+      ? parseInt(process.env.CLAUDE_MAX_TOKENS, 10)
+      : 8000;
 
     // Call Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -47,8 +53,8 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: model || 'claude-sonnet-4-20250514',
-        max_tokens: max_tokens || 8000,
+        model: modelName,
+        max_tokens: maxTokens,
         system: system || '',
         messages: messages,
       }),
