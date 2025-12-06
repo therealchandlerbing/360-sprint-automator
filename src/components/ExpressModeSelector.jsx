@@ -155,12 +155,17 @@ const ExpressModeSelectorComponent = ({
         <h3 id="mode-selector-title" style={styles.title}>Choose Assessment Approach</h3>
       </div>
       <div style={styles.body}>
-        <div style={styles.optionsGrid}>
+        <div
+          role="radiogroup"
+          aria-labelledby="mode-selector-title"
+          style={styles.optionsGrid}
+        >
           {/* Step-by-Step Mode */}
           <div
             role="radio"
             aria-checked={selectedMode === 'step-by-step'}
-            tabIndex={0}
+            aria-disabled={disabled}
+            tabIndex={disabled ? -1 : 0}
             onClick={() => handleSelect('step-by-step')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -219,7 +224,8 @@ const ExpressModeSelectorComponent = ({
           <div
             role="radio"
             aria-checked={selectedMode === 'express'}
-            tabIndex={0}
+            aria-disabled={disabled}
+            tabIndex={disabled ? -1 : 0}
             onClick={() => handleSelect('express')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {

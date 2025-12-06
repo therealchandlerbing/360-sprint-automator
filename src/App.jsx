@@ -3,7 +3,7 @@
 // Refactored modular architecture with Express Mode
 // ============================================
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import JSZip from 'jszip';
 
 // Constants
@@ -108,6 +108,20 @@ export default function VianeoSprintAutomator() {
 
   // Ref to track if Express mode should be cancelled
   const expressAbortRef = useRef(false);
+
+  // Cleanup URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    const reportURL = expressAssessment.outputs.reportURL;
+    const dashboardURL = dashboard.outputs.dashboardURL;
+    return () => {
+      if (reportURL) {
+        URL.revokeObjectURL(reportURL);
+      }
+      if (dashboardURL) {
+        URL.revokeObjectURL(dashboardURL);
+      }
+    };
+  }, [expressAssessment.outputs.reportURL, dashboard.outputs.dashboardURL]);
 
   // Derived state
   const completedSteps = Object.keys(stepOutputs).length;
@@ -382,6 +396,45 @@ export default function VianeoSprintAutomator() {
         throw new Error('No assessment data available');
       }
 
+      // HTML escape function to prevent XSS
+      const escapeHtml = (text) => {
+        if (text == null) return '';
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      };
+
+      // Safe JSON serialization for script context
+      const safeJsonStringify = (obj) => {
+        return JSON.stringify(obj)
+          .replace(/</g, '\\u003c')
+          .replace(/>/g, '\\u003e')
+          .replace(/&/g, '\\u0026');
+      };
+
+      // Extract and sanitize values
+      const projectName = escapeHtml(assessmentData.metadata?.projectName || 'Assessment');
+      const assessmentDate = escapeHtml(assessmentData.metadata?.assessmentDate || new Date().toISOString().split('T')[0]);
+      const recommendation = assessmentData.executiveSummary?.recommendation || 'N/A';
+      const recommendationDisplay = escapeHtml(recommendation.replace('_', ' '));
+      const investmentScore = assessmentData.executiveSummary?.investmentReadinessScore || '--';
+      const overallScore = assessmentData.marketMaturity?.weightedOverall?.toFixed(1) || '--';
+
+      // Determine recommendation color class (safe - no user input)
+      const recommendationColorClass = recommendation === 'GO' ? 'text-green-600' :
+        recommendation === 'CONDITIONAL_GO' ? 'text-yellow-600' : 'text-red-600';
+
+      // Sanitize arrays
+      const keyStrengths = (assessmentData.executiveSummary?.keyStrengths || [])
+        .map(s => `<li class="flex items-center gap-2"><span class="text-green-500">✓</span>${escapeHtml(s)}</li>`)
+        .join('');
+      const criticalRisks = (assessmentData.executiveSummary?.criticalRisks || [])
+        .map(r => `<li class="flex items-center gap-2"><span class="text-red-500">!</span>${escapeHtml(r)}</li>`)
+        .join('');
+
       // Generate simple HTML dashboard
       const dashboardHTML = `
 <!DOCTYPE html>
@@ -389,9 +442,9 @@ export default function VianeoSprintAutomator() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>360 Business Validation Dashboard - ${assessmentData.metadata?.projectName || 'Assessment'}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>360 Business Validation Dashboard - ${projectName}</title>
+  <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-BgkHqOx+R5MZaH4g/KbELKXhQCQM0HZ2u+V1r8q5OvfR6pT8HxL9V0FbHLn6Mj35" crossorigin="anonymous"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -400,23 +453,23 @@ export default function VianeoSprintAutomator() {
 <body class="bg-gray-100 min-h-screen">
   <header class="bg-gradient-to-r from-slate-800 to-slate-700 text-white p-6">
     <h1 class="text-2xl font-bold">360 Business Validation Dashboard</h1>
-    <p class="text-gray-300">${assessmentData.metadata?.projectName || 'Assessment'} | ${assessmentData.metadata?.assessmentDate || new Date().toISOString().split('T')[0]}</p>
+    <p class="text-gray-300">${projectName} | ${assessmentDate}</p>
   </header>
 
   <main class="container mx-auto p-6">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
       <div class="card p-6 text-center">
-        <div class="text-4xl font-bold ${assessmentData.executiveSummary?.recommendation === 'GO' ? 'text-green-600' : assessmentData.executiveSummary?.recommendation === 'CONDITIONAL_GO' ? 'text-yellow-600' : 'text-red-600'}">
-          ${assessmentData.executiveSummary?.recommendation?.replace('_', ' ') || 'N/A'}
+        <div class="text-4xl font-bold ${recommendationColorClass}">
+          ${recommendationDisplay}
         </div>
         <div class="text-gray-500 uppercase text-sm mt-2">Recommendation</div>
       </div>
       <div class="card p-6 text-center">
-        <div class="text-4xl font-bold text-slate-800">${assessmentData.executiveSummary?.investmentReadinessScore || '--'}</div>
+        <div class="text-4xl font-bold text-slate-800">${escapeHtml(investmentScore)}</div>
         <div class="text-gray-500 uppercase text-sm mt-2">Investment Readiness Score</div>
       </div>
       <div class="card p-6 text-center">
-        <div class="text-4xl font-bold text-slate-800">${assessmentData.marketMaturity?.weightedOverall?.toFixed(1) || '--'}</div>
+        <div class="text-4xl font-bold text-slate-800">${escapeHtml(overallScore)}</div>
         <div class="text-gray-500 uppercase text-sm mt-2">Overall VIANEO Score</div>
       </div>
     </div>
@@ -435,20 +488,20 @@ export default function VianeoSprintAutomator() {
     <div class="card p-6 mt-6">
       <h2 class="text-lg font-semibold mb-4">Key Strengths</h2>
       <ul class="space-y-2">
-        ${(assessmentData.executiveSummary?.keyStrengths || []).map(s => `<li class="flex items-center gap-2"><span class="text-green-500">✓</span>${s}</li>`).join('')}
+        ${keyStrengths}
       </ul>
     </div>
 
     <div class="card p-6 mt-6">
       <h2 class="text-lg font-semibold mb-4">Critical Risks</h2>
       <ul class="space-y-2">
-        ${(assessmentData.executiveSummary?.criticalRisks || []).map(r => `<li class="flex items-center gap-2"><span class="text-red-500">!</span>${r}</li>`).join('')}
+        ${criticalRisks}
       </ul>
     </div>
   </main>
 
   <script>
-    const data = ${JSON.stringify(assessmentData)};
+    const data = ${safeJsonStringify(assessmentData)};
 
     // Diagnostic Chart
     const diagCtx = document.getElementById('diagnosticChart').getContext('2d');

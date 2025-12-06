@@ -20,9 +20,6 @@ import {
   Header,
   Footer,
   PageNumber,
-  NumberFormat,
-  TableOfContents,
-  StyleLevel,
 } from 'docx';
 
 // Design constants matching VIANEO brand
@@ -607,13 +604,18 @@ function createMarketMaturity(data) {
       ], true),
       ...dimensions.map((dim) => {
         const d = mm[dim] || {};
-        const meetsThreshold = d.meetsThreshold ? 'MEETS' : 'BELOW';
+        const meetsStatus = d.meetsThreshold != null
+          ? (d.meetsThreshold ? 'MEETS' : 'BELOW')
+          : 'N/A';
+        const statusColor = d.meetsThreshold != null
+          ? (d.meetsThreshold ? COLORS.success : COLORS.danger)
+          : COLORS.textMuted;
         return createTableRow([
           { text: dim.charAt(0).toUpperCase() + dim.slice(1) },
-          { text: `${(d.weight * 100).toFixed(0)}%` },
+          { text: d.weight != null ? `${(d.weight * 100).toFixed(0)}%` : 'N/A' },
           { text: d.score?.toFixed(1) || 'N/A' },
-          { text: `>=${d.threshold?.toFixed(1) || 'N/A'}` },
-          { text: meetsThreshold, color: d.meetsThreshold ? COLORS.success : COLORS.danger },
+          { text: d.threshold != null ? `>=${d.threshold.toFixed(1)}` : 'N/A' },
+          { text: meetsStatus, color: statusColor },
         ]);
       }),
       createTableRow([
@@ -621,7 +623,7 @@ function createMarketMaturity(data) {
         { text: '100%', bold: true },
         { text: mm.weightedOverall?.toFixed(2) || 'N/A', bold: true },
         { text: '>=3.2', bold: true },
-        { text: mm.weightedOverall >= 3.2 ? 'MEETS' : 'BELOW', bold: true },
+        { text: mm.weightedOverall != null ? (mm.weightedOverall >= 3.2 ? 'MEETS' : 'BELOW') : 'N/A', bold: true },
       ]),
     ],
   });

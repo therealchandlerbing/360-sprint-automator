@@ -473,7 +473,16 @@ const ExpressCompletionComponent = ({
               style={{ ...styles.downloadButton, ...styles.downloadButtonDisabled }}
               disabled
             >
-              <span className="spinner" style={{ width: '16px', height: '16px' }}>&#8635;</span>
+              <span style={{
+                display: 'inline-block',
+                width: '16px',
+                height: '16px',
+                border: '2px solid rgba(255,255,255,0.3)',
+                borderTopColor: '#fff',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite',
+                marginRight: '8px',
+              }} />
               Generating...
             </button>
           )}
