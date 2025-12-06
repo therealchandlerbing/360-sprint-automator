@@ -21,7 +21,7 @@ A React-based web application that guides users through the 13-step VIANEO Innov
 
 ### Export Options
 - **Markdown export** - Individual step outputs or bundled complete sprint
-- **HTML export** - Professionally styled documents with print support and XSS protection
+- **HTML export** - Professionally styled documents with print support
 - **ZIP bundle** - All outputs packaged with a manifest file for easy distribution
 
 ### User Experience
@@ -93,50 +93,50 @@ A React-based web application that guides users through the 13-step VIANEO Innov
 360-sprint-automator/
 ├── .github/
 │   └── workflows/
-│       └── node.js.yml        # CI workflow (Node 18, 20, 22)
+│       └── node.js.yml              # CI workflow (Node 18, 20, 22)
 ├── api/
-│   └── claude.js              # Vercel serverless function (API proxy)
+│   └── claude.js                    # Vercel serverless function (API proxy)
 ├── src/
 │   ├── components/
-│   │   ├── BranchSelector.jsx # Organization branch selection
-│   │   ├── ErrorBox.jsx       # Error display component
-│   │   ├── Header.jsx         # App header with progress
-│   │   ├── InputSection.jsx   # File upload and text input
-│   │   ├── Navigation.jsx     # Step navigation controls
-│   │   ├── OutputDisplay.jsx  # Rendered output with actions
-│   │   ├── ProcessButton.jsx  # Step processing trigger
-│   │   ├── ProcessingLog.jsx  # Real-time API log
-│   │   ├── Sidebar.jsx        # Step list and session controls
-│   │   ├── StepHeader.jsx     # Current step info display
-│   │   └── index.js           # Component exports
+│   │   ├── BranchSelector.jsx       # Organization branch selection
+│   │   ├── ErrorBox.jsx             # Error display component
+│   │   ├── Header.jsx               # App header with progress
+│   │   ├── InputSection.jsx         # File upload and text input
+│   │   ├── Navigation.jsx           # Step navigation controls
+│   │   ├── OutputDisplay.jsx        # Rendered output with actions
+│   │   ├── ProcessButton.jsx        # Step processing trigger
+│   │   ├── ProcessingLog.jsx        # Real-time API log
+│   │   ├── Sidebar.jsx              # Step list and session controls
+│   │   ├── StepHeader.jsx           # Current step info display
+│   │   └── index.js                 # Component exports
 │   ├── constants/
-│   │   ├── colors.js          # Design system colors
-│   │   ├── docDesign.js       # Document styling config
-│   │   ├── prompts.js         # AI prompts for each step
-│   │   ├── steps.js           # VIANEO framework steps
-│   │   ├── storage.js         # localStorage keys
-│   │   └── index.js           # Constants exports
+│   │   ├── colors.js                # Design system colors
+│   │   ├── docDesign.js             # Document styling config
+│   │   ├── prompts.js               # AI prompts for each step
+│   │   ├── steps.js                 # VIANEO framework steps
+│   │   ├── storage.js               # localStorage keys
+│   │   └── index.js                 # Constants exports
 │   ├── hooks/
-│   │   ├── useClaudeAPI.js    # API communication hook
-│   │   ├── useDebounce.js     # Input debouncing
-│   │   ├── useMobileMenu.js   # Mobile navigation state
+│   │   ├── useClaudeAPI.js          # API communication hook
+│   │   ├── useDebounce.js           # Input debouncing
+│   │   ├── useMobileMenu.js         # Mobile navigation state
 │   │   ├── useSessionPersistence.js # localStorage management
-│   │   └── index.js           # Hooks exports
+│   │   └── index.js                 # Hooks exports
 │   ├── styles/
-│   │   └── appStyles.js       # Application CSS-in-JS
+│   │   └── appStyles.js             # Application CSS-in-JS
 │   ├── utils/
-│   │   ├── fileParser.js      # PDF/DOCX/TXT parsing
-│   │   ├── htmlTemplate.js    # HTML export template
-│   │   ├── markdownToHtml.js  # MD to HTML conversion
-│   │   └── index.js           # Utils exports
-│   ├── App.jsx                # Main application component
-│   └── main.jsx               # React entry point
-├── public/                    # Static assets
-├── .env.example               # Environment variables template
-├── eslint.config.js           # ESLint configuration
-├── package.json               # Dependencies and scripts
-├── vercel.json                # Vercel configuration
-└── vite.config.js             # Vite build configuration
+│   │   ├── fileParser.js            # PDF/DOCX/TXT parsing
+│   │   ├── htmlTemplate.js          # HTML export template
+│   │   ├── markdownToHtml.js        # MD to HTML conversion
+│   │   └── index.js                 # Utils exports
+│   ├── App.jsx                      # Main application component
+│   └── main.jsx                     # React entry point
+├── public/                          # Static assets
+├── .env.example                     # Environment variables template
+├── eslint.config.js                 # ESLint configuration
+├── package.json                     # Dependencies and scripts
+├── vercel.json                      # Vercel configuration
+└── vite.config.js                   # Vite build configuration
 ```
 
 ## Architecture
