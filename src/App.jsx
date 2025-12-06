@@ -1452,9 +1452,12 @@ export default function VianeoSprintAutomator() {
       if (savedInputContent) setInputContent(savedInputContent);
       if (savedStepOutputs) {
         try {
-          setStepOutputs(JSON.parse(savedStepOutputs));
-        } catch {
-          // Invalid JSON, ignore
+          const parsed = JSON.parse(savedStepOutputs);
+          if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+            setStepOutputs(parsed);
+          }
+        } catch (err) {
+          console.error('Error parsing saved step outputs:', err);
         }
       }
       if (savedBranch) setOrganizationBranch(savedBranch);
@@ -1464,8 +1467,8 @@ export default function VianeoSprintAutomator() {
           setCurrentStep(step);
         }
       }
-    } catch {
-      // localStorage not available or error, continue with defaults
+    } catch (err) {
+      console.error('Error loading session from localStorage:', err);
     }
     setIsSessionLoaded(true);
   }, []);
@@ -1483,11 +1486,14 @@ export default function VianeoSprintAutomator() {
       localStorage.setItem(STORAGE_KEYS.STEP_OUTPUTS, JSON.stringify(stepOutputs));
       localStorage.setItem(STORAGE_KEYS.CURRENT_STEP, String(currentStep));
       localStorage.setItem(STORAGE_KEYS.LAST_SAVED, new Date().toISOString());
+      // Handle organizationBranch - remove from storage if null, otherwise save
       if (organizationBranch) {
         localStorage.setItem(STORAGE_KEYS.ORGANIZATION_BRANCH, organizationBranch);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.ORGANIZATION_BRANCH);
       }
-    } catch {
-      // localStorage not available or quota exceeded, silently fail
+    } catch (err) {
+      console.error('Error saving session to localStorage:', err);
     }
   }, [isSessionLoaded, projectName, inputContent, stepOutputs, currentStep, organizationBranch]);
 
@@ -1720,46 +1726,52 @@ export default function VianeoSprintAutomator() {
 
   // Download all outputs as ZIP bundle with manifest
   const downloadAllAsZip = useCallback(async () => {
-    const date = new Date().toISOString().split('T')[0];
-    const timestamp = new Date().toISOString();
-    const safeName = (projectName || 'Project').replace(/\s+/g, '_');
+    try {
+      const date = new Date().toISOString().split('T')[0];
+      const timestamp = new Date().toISOString();
+      const safeName = (projectName || 'Project').replace(/\s+/g, '_');
 
-    const zip = new JSZip();
+      const zip = new JSZip();
 
-    // Add each step output as a separate file
-    const files = [];
-    Object.entries(stepOutputs)
-      .sort(([a], [b]) => parseInt(a) - parseInt(b))
-      .forEach(([stepId, output]) => {
-        const step = STEPS[parseInt(stepId)];
-        const filename = `${String(stepId).padStart(2, '0')}${step.outputFile.replace(/^_\d+/, '')}.md`;
-        zip.file(filename, output);
-        files.push({
-          step: parseInt(stepId),
-          filename: filename,
-          size: output.length
+      // Add each step output as a separate file
+      const files = [];
+      Object.entries(stepOutputs)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .forEach(([stepId, output]) => {
+          const step = STEPS[parseInt(stepId)];
+          // Maintain underscore prefix for consistency (e.g., 00_ExecutiveBrief.md)
+          const filename = `${step.outputFile.replace(/^_\d+/, '_' + String(stepId).padStart(2, '0'))}.md`;
+          zip.file(filename, output);
+          files.push({
+            step: parseInt(stepId),
+            filename: filename,
+            size: output.length
+          });
         });
-      });
 
-    // Create manifest
-    const manifest = {
-      projectName: projectName || 'Project',
-      generatedAt: timestamp,
-      completedSteps: Object.keys(stepOutputs).map(id => parseInt(id)).sort((a, b) => a - b),
-      organizationBranch: organizationBranch,
-      totalSteps: STEPS.length,
-      files: files
-    };
-    zip.file('_manifest.json', JSON.stringify(manifest, null, 2));
+      // Create manifest
+      const manifest = {
+        projectName: projectName || 'Project',
+        generatedAt: timestamp,
+        completedSteps: Object.keys(stepOutputs).map(id => parseInt(id)).sort((a, b) => a - b),
+        organizationBranch: organizationBranch,
+        totalSteps: STEPS.length,
+        files: files
+      };
+      zip.file('_manifest.json', JSON.stringify(manifest, null, 2));
 
-    // Generate and download ZIP
-    const content = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${safeName}_VIANEO_Sprint_${date}.zip`;
-    a.click();
-    URL.revokeObjectURL(url);
+      // Generate and download ZIP
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeName}_VIANEO_Sprint_${date}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error creating ZIP bundle:', err);
+      setError(`Failed to create ZIP bundle: ${err.message}`);
+    }
   }, [stepOutputs, projectName, organizationBranch]);
 
   // Copy output to clipboard
@@ -1772,15 +1784,26 @@ export default function VianeoSprintAutomator() {
       setCopyFeedback(stepId);
       setTimeout(() => setCopyFeedback(null), 2000);
     } catch {
-      // Fallback for older browsers
-      const textarea = document.createElement('textarea');
-      textarea.value = output;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopyFeedback(stepId);
-      setTimeout(() => setCopyFeedback(null), 2000);
+      // Fallback for older browsers using deprecated execCommand
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = output;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (success) {
+          setCopyFeedback(stepId);
+          setTimeout(() => setCopyFeedback(null), 2000);
+        } else {
+          setError('Failed to copy to clipboard');
+        }
+      } catch (fallbackErr) {
+        console.error('Clipboard fallback failed:', fallbackErr);
+        setError('Failed to copy to clipboard');
+      }
     }
   }, [stepOutputs]);
 
@@ -1818,18 +1841,31 @@ export default function VianeoSprintAutomator() {
       try {
         const sessionData = JSON.parse(e.target.result);
 
-        // Validate session data
-        if (!sessionData.version || !sessionData.stepOutputs) {
-          setError('Invalid session file format');
+        // Validate session data - check version and stepOutputs structure
+        if (
+          !sessionData.version ||
+          typeof sessionData.stepOutputs !== 'object' ||
+          sessionData.stepOutputs === null ||
+          Array.isArray(sessionData.stepOutputs)
+        ) {
+          setError('Invalid session file format or missing critical data');
           return;
         }
 
-        // Restore session state
-        if (sessionData.projectName) setProjectName(sessionData.projectName);
-        if (sessionData.organizationBranch) setOrganizationBranch(sessionData.organizationBranch);
-        if (typeof sessionData.currentStep === 'number') setCurrentStep(sessionData.currentStep);
-        if (sessionData.stepOutputs) setStepOutputs(sessionData.stepOutputs);
-        if (sessionData.inputContent) setInputContent(sessionData.inputContent);
+        // Restore session state using nullish coalescing for proper falsy value handling
+        setProjectName(sessionData.projectName ?? '');
+        setOrganizationBranch(sessionData.organizationBranch ?? null);
+        setInputContent(sessionData.inputContent ?? '');
+        setStepOutputs(sessionData.stepOutputs);
+
+        // Validate currentStep range before setting
+        if (
+          typeof sessionData.currentStep === 'number' &&
+          sessionData.currentStep >= 0 &&
+          sessionData.currentStep < STEPS.length
+        ) {
+          setCurrentStep(sessionData.currentStep);
+        }
 
         setError(null);
         setProcessingLog([{ time: new Date().toLocaleTimeString(), message: `Session restored from ${file.name}` }]);
@@ -1852,8 +1888,8 @@ export default function VianeoSprintAutomator() {
     // Clear localStorage
     try {
       Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
-    } catch {
-      // localStorage not available
+    } catch (err) {
+      console.error('Error clearing localStorage:', err);
     }
 
     // Reset state
