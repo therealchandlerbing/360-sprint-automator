@@ -4,12 +4,31 @@ A React-based web application that guides users through the 13-step VIANEO Innov
 
 ## Features
 
-- 13-step VIANEO methodology wizard
-- Claude AI-powered document analysis
-- Secure API proxy (API key never exposed to client)
-- Professional output formatting
-- Export individual or bundled Markdown outputs
-- Stripe-inspired UI with WCAG AA compliant colors
+### Core Functionality
+- **13-step VIANEO methodology wizard** - Guided process through Foundation, Deep Dive, Synthesis, and Viability phases
+- **Claude AI-powered analysis** - Intelligent document processing with context-aware prompts for each step
+- **Secure API proxy** - API key stored server-side only, never exposed to the browser
+
+### Document Processing
+- **Multi-format file support** - Upload and parse PDF, DOCX, TXT, and Markdown files
+- **Drag-and-drop uploads** - Easy file management with visual feedback
+- **Content aggregation** - Combine multiple source documents for comprehensive analysis
+
+### Session Management
+- **Auto-save to localStorage** - Never lose your work; progress is saved automatically
+- **Session export/import** - Save your complete session as JSON and restore it later
+- **Unsaved work protection** - Browser warning when leaving with unsaved progress
+
+### Export Options
+- **Markdown export** - Individual step outputs or bundled complete sprint
+- **HTML export** - Professionally styled documents with print support and XSS protection
+- **ZIP bundle** - All outputs packaged with a manifest file for easy distribution
+
+### User Experience
+- **Mobile-responsive design** - Full functionality on desktop and mobile devices
+- **Real-time processing log** - Monitor API calls and step progress
+- **Progress tracking** - Visual sidebar showing completed steps and overall progress
+- **Stripe-inspired UI** - Clean, professional interface with WCAG AA compliant colors
 
 ## Quick Start
 
@@ -72,14 +91,52 @@ A React-based web application that guides users through the 13-step VIANEO Innov
 
 ```
 360-sprint-automator/
+├── .github/
+│   └── workflows/
+│       └── node.js.yml        # CI workflow (Node 18, 20, 22)
 ├── api/
-│   └── claude.js          # Vercel serverless function (API proxy)
+│   └── claude.js              # Vercel serverless function (API proxy)
 ├── src/
-│   ├── App.jsx            # Main application component
-│   └── main.jsx           # React entry point
-├── vercel.json            # Vercel configuration
-├── .env.example           # Environment variables template
-└── package.json           # Dependencies
+│   ├── components/
+│   │   ├── BranchSelector.jsx # Organization branch selection
+│   │   ├── ErrorBox.jsx       # Error display component
+│   │   ├── Header.jsx         # App header with progress
+│   │   ├── InputSection.jsx   # File upload and text input
+│   │   ├── Navigation.jsx     # Step navigation controls
+│   │   ├── OutputDisplay.jsx  # Rendered output with actions
+│   │   ├── ProcessButton.jsx  # Step processing trigger
+│   │   ├── ProcessingLog.jsx  # Real-time API log
+│   │   ├── Sidebar.jsx        # Step list and session controls
+│   │   ├── StepHeader.jsx     # Current step info display
+│   │   └── index.js           # Component exports
+│   ├── constants/
+│   │   ├── colors.js          # Design system colors
+│   │   ├── docDesign.js       # Document styling config
+│   │   ├── prompts.js         # AI prompts for each step
+│   │   ├── steps.js           # VIANEO framework steps
+│   │   ├── storage.js         # localStorage keys
+│   │   └── index.js           # Constants exports
+│   ├── hooks/
+│   │   ├── useClaudeAPI.js    # API communication hook
+│   │   ├── useDebounce.js     # Input debouncing
+│   │   ├── useMobileMenu.js   # Mobile navigation state
+│   │   ├── useSessionPersistence.js # localStorage management
+│   │   └── index.js           # Hooks exports
+│   ├── styles/
+│   │   └── appStyles.js       # Application CSS-in-JS
+│   ├── utils/
+│   │   ├── fileParser.js      # PDF/DOCX/TXT parsing
+│   │   ├── htmlTemplate.js    # HTML export template
+│   │   ├── markdownToHtml.js  # MD to HTML conversion
+│   │   └── index.js           # Utils exports
+│   ├── App.jsx                # Main application component
+│   └── main.jsx               # React entry point
+├── public/                    # Static assets
+├── .env.example               # Environment variables template
+├── eslint.config.js           # ESLint configuration
+├── package.json               # Dependencies and scripts
+├── vercel.json                # Vercel configuration
+└── vite.config.js             # Vite build configuration
 ```
 
 ## Architecture
@@ -88,7 +145,7 @@ A React-based web application that guides users through the 13-step VIANEO Innov
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │                 │     │                 │     │                 │
 │  React Frontend │────▶│  /api/claude    │────▶│  Anthropic API  │
-│  (Client-side)  │     │  (Serverless)   │     │  (Claude)       │
+│  (Vite + React) │     │  (Serverless)   │     │  (Claude)       │
 │                 │     │                 │     │                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
          │                      │
@@ -100,6 +157,17 @@ A React-based web application that guides users through the 13-step VIANEO Innov
                         Secure API proxy
 ```
 
+### Key Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `react` 19.x | UI framework |
+| `vite` 7.x | Build tool and dev server |
+| `pdfjs-dist` | PDF file parsing |
+| `mammoth` | DOCX file parsing |
+| `marked` | Markdown to HTML conversion |
+| `jszip` | ZIP bundle creation |
+
 ## Available Scripts
 
 | Command | Description |
@@ -108,30 +176,58 @@ A React-based web application that guides users through the 13-step VIANEO Innov
 | `npm run build` | Build for production |
 | `npm run lint` | Run ESLint |
 | `npm run preview` | Preview production build |
+| `npm test` | Run tests |
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | Your Anthropic API key |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ANTHROPIC_API_KEY` | Yes | - | Your Anthropic API key |
+| `CLAUDE_MODEL` | No | `claude-sonnet-4-20250514` | Claude model to use |
+| `CLAUDE_MAX_TOKENS` | No | `8000` | Maximum response tokens |
 
 ## VIANEO Framework Steps
 
-| Step | Name | Phase |
-|------|------|-------|
-| 0 | Executive Brief | Foundation |
-| 1 | Application Forms | Foundation |
-| 2 | 40Q Diagnostic | Foundation |
-| 3 | 29Q Market Maturity | Foundation |
-| 4 | Legitimacy Worksheet | Deep Dive |
-| 5 | Needs & Requesters | Deep Dive |
-| 6 | Persona Development | Deep Dive |
-| 7 | Needs Qualification | Deep Dive |
-| 8 | Players & Influencers | Deep Dive |
-| 9 | Value Network Map | Deep Dive |
-| 10 | Diagnostic Comment | Synthesis |
-| 11 | Features-Needs Matrix | Synthesis |
-| 12 | Viability Assessment | Viability |
+### Foundation Phase
+| Step | Name | Description |
+|------|------|-------------|
+| 0 | Executive Brief | Extract structured brief from raw materials |
+| 1 | Application Forms | Generate program-specific documentation |
+| 2 | 40Q Diagnostic | 4-dimension rapid assessment (Team, Tech, Mgmt, Commercial) |
+| 3 | 29Q Market Maturity | 5-dimension VIANEO scoring with weighted thresholds |
+
+### Deep Dive Phase
+| Step | Name | Description |
+|------|------|-------------|
+| 4 | Legitimacy Worksheet | Problem validation and means inventory |
+| 5 | Needs & Requesters | WHO/WHAT/WHY/HOW analysis (4-file output) |
+| 6 | Persona Development | Evidence-based personas from requesters |
+| 7 | Needs Qualification | Interactive matrix & priority zones |
+| 8 | Players & Influencers | Ecosystem acceptability mapping |
+| 9 | Value Network Map | Network visualization & value flows |
+
+### Synthesis Phase
+| Step | Name | Description |
+|------|------|-------------|
+| 10 | Diagnostic Comment | Executive decision brief |
+| 11 | Features-Needs Matrix | MVP scope analysis with entity validation |
+
+### Viability Phase
+| Step | Name | Description |
+|------|------|-------------|
+| 12 | Viability Assessment | Gate recommendation & dashboard |
+
+## Usage Tips
+
+1. **Start with Step 0** - Upload all your source materials (pitch decks, business plans, applications) to generate an Executive Brief
+2. **Select your organization branch** - In Step 1, choose the appropriate program track for tailored application forms
+3. **Review each output** - Use the copy, download (MD/HTML), or proceed to the next step
+4. **Export your session** - Save your work as JSON to continue later or share with teammates
+5. **Download complete bundle** - When finished, export all outputs as a ZIP with manifest
+
+## Contributing
+
+Contributions are welcome! Please ensure all code passes linting (`npm run lint`) and builds successfully (`npm run build`) before submitting a pull request.
 
 ## License
 
