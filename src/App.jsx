@@ -1,4 +1,17 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import JSZip from 'jszip';
+
+// ============================================
+// Local Storage Keys for Session Persistence
+// ============================================
+const STORAGE_KEYS = {
+  PROJECT_NAME: 'vianeo_projectName',
+  INPUT_CONTENT: 'vianeo_inputContent',
+  STEP_OUTPUTS: 'vianeo_stepOutputs',
+  ORGANIZATION_BRANCH: 'vianeo_organizationBranch',
+  CURRENT_STEP: 'vianeo_currentStep',
+  LAST_SAVED: 'vianeo_lastSaved',
+};
 
 // ============================================
 // VIANEO Framework Constants & Configuration
@@ -1419,7 +1432,89 @@ export default function VianeoSprintAutomator() {
   const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [error, setError] = useState(null);
+  const [copyFeedback, setCopyFeedback] = useState(null);
+  const [isSessionLoaded, setIsSessionLoaded] = useState(false);
   const fileInputRef = useRef(null);
+  const sessionInputRef = useRef(null);
+
+  // ============================================
+  // Session Recovery: Load from localStorage on mount
+  // ============================================
+  useEffect(() => {
+    try {
+      const savedProjectName = localStorage.getItem(STORAGE_KEYS.PROJECT_NAME);
+      const savedInputContent = localStorage.getItem(STORAGE_KEYS.INPUT_CONTENT);
+      const savedStepOutputs = localStorage.getItem(STORAGE_KEYS.STEP_OUTPUTS);
+      const savedBranch = localStorage.getItem(STORAGE_KEYS.ORGANIZATION_BRANCH);
+      const savedCurrentStep = localStorage.getItem(STORAGE_KEYS.CURRENT_STEP);
+
+      if (savedProjectName) setProjectName(savedProjectName);
+      if (savedInputContent) setInputContent(savedInputContent);
+      if (savedStepOutputs) {
+        try {
+          const parsed = JSON.parse(savedStepOutputs);
+          if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+            setStepOutputs(parsed);
+          }
+        } catch (err) {
+          console.error('Error parsing saved step outputs:', err);
+        }
+      }
+      if (savedBranch) setOrganizationBranch(savedBranch);
+      if (savedCurrentStep) {
+        const step = parseInt(savedCurrentStep, 10);
+        if (!isNaN(step) && step >= 0 && step < STEPS.length) {
+          setCurrentStep(step);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading session from localStorage:', err);
+    }
+    setIsSessionLoaded(true);
+  }, []);
+
+  // ============================================
+  // Auto-save: Save to localStorage when state changes
+  // ============================================
+  useEffect(() => {
+    // Don't save until initial session is loaded to prevent overwriting
+    if (!isSessionLoaded) return;
+
+    try {
+      localStorage.setItem(STORAGE_KEYS.PROJECT_NAME, projectName);
+      localStorage.setItem(STORAGE_KEYS.INPUT_CONTENT, inputContent);
+      localStorage.setItem(STORAGE_KEYS.STEP_OUTPUTS, JSON.stringify(stepOutputs));
+      localStorage.setItem(STORAGE_KEYS.CURRENT_STEP, String(currentStep));
+      localStorage.setItem(STORAGE_KEYS.LAST_SAVED, new Date().toISOString());
+      // Handle organizationBranch - remove from storage if null, otherwise save
+      if (organizationBranch) {
+        localStorage.setItem(STORAGE_KEYS.ORGANIZATION_BRANCH, organizationBranch);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.ORGANIZATION_BRANCH);
+      }
+    } catch (err) {
+      console.error('Error saving session to localStorage:', err);
+    }
+  }, [isSessionLoaded, projectName, inputContent, stepOutputs, currentStep, organizationBranch]);
+
+  // ============================================
+  // Unsaved Changes Warning: Warn before closing
+  // ============================================
+  useEffect(() => {
+    const hasUnsavedWork = Object.keys(stepOutputs).length > 0 || inputContent.trim().length > 0;
+
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedWork) {
+        e.preventDefault();
+        // Modern browsers require returnValue to be set
+        e.returnValue = 'You have unsaved work. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [stepOutputs, inputContent]);
 
   const addLog = useCallback((message) => {
     setProcessingLog(prev => [...prev, { time: new Date().toLocaleTimeString(), message }]);
@@ -1629,6 +1724,186 @@ export default function VianeoSprintAutomator() {
     URL.revokeObjectURL(url);
   }, [stepOutputs, projectName]);
 
+  // Download all outputs as ZIP bundle with manifest
+  const downloadAllAsZip = useCallback(async () => {
+    try {
+      const date = new Date().toISOString().split('T')[0];
+      const timestamp = new Date().toISOString();
+      const safeName = (projectName || 'Project').replace(/\s+/g, '_');
+
+      const zip = new JSZip();
+
+      // Add each step output as a separate file
+      const files = [];
+      Object.entries(stepOutputs)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .forEach(([stepId, output]) => {
+          const step = STEPS[parseInt(stepId)];
+          // Maintain underscore prefix for consistency (e.g., 00_ExecutiveBrief.md)
+          const filename = `${step.outputFile.replace(/^_\d+/, '_' + String(stepId).padStart(2, '0'))}.md`;
+          zip.file(filename, output);
+          files.push({
+            step: parseInt(stepId),
+            filename: filename,
+            size: output.length
+          });
+        });
+
+      // Create manifest
+      const manifest = {
+        projectName: projectName || 'Project',
+        generatedAt: timestamp,
+        completedSteps: Object.keys(stepOutputs).map(id => parseInt(id)).sort((a, b) => a - b),
+        organizationBranch: organizationBranch,
+        totalSteps: STEPS.length,
+        files: files
+      };
+      zip.file('_manifest.json', JSON.stringify(manifest, null, 2));
+
+      // Generate and download ZIP
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeName}_VIANEO_Sprint_${date}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error creating ZIP bundle:', err);
+      setError(`Failed to create ZIP bundle: ${err.message}`);
+    }
+  }, [stepOutputs, projectName, organizationBranch]);
+
+  // Copy output to clipboard
+  const copyToClipboard = useCallback(async (stepId) => {
+    const output = stepOutputs[stepId];
+    if (!output) return;
+
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopyFeedback(stepId);
+      setTimeout(() => setCopyFeedback(null), 2000);
+    } catch {
+      // Fallback for older browsers using deprecated execCommand
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = output;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (success) {
+          setCopyFeedback(stepId);
+          setTimeout(() => setCopyFeedback(null), 2000);
+        } else {
+          setError('Failed to copy to clipboard');
+        }
+      } catch (fallbackErr) {
+        console.error('Clipboard fallback failed:', fallbackErr);
+        setError('Failed to copy to clipboard');
+      }
+    }
+  }, [stepOutputs]);
+
+  // Export session state as JSON
+  const exportSession = useCallback(() => {
+    const date = new Date().toISOString().split('T')[0];
+    const safeName = (projectName || 'Project').replace(/\s+/g, '_');
+
+    const sessionData = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      projectName: projectName,
+      organizationBranch: organizationBranch,
+      currentStep: currentStep,
+      stepOutputs: stepOutputs,
+      inputContent: inputContent
+    };
+
+    const blob = new Blob([JSON.stringify(sessionData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${safeName}_session_${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [projectName, organizationBranch, currentStep, stepOutputs, inputContent]);
+
+  // Import session state from JSON
+  const importSession = useCallback((event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const sessionData = JSON.parse(e.target.result);
+
+        // Validate session data - check version and stepOutputs structure
+        if (
+          !sessionData.version ||
+          typeof sessionData.stepOutputs !== 'object' ||
+          sessionData.stepOutputs === null ||
+          Array.isArray(sessionData.stepOutputs)
+        ) {
+          setError('Invalid session file format or missing critical data');
+          return;
+        }
+
+        // Restore session state using nullish coalescing for proper falsy value handling
+        setProjectName(sessionData.projectName ?? '');
+        setOrganizationBranch(sessionData.organizationBranch ?? null);
+        setInputContent(sessionData.inputContent ?? '');
+        setStepOutputs(sessionData.stepOutputs);
+
+        // Validate currentStep range before setting
+        if (
+          typeof sessionData.currentStep === 'number' &&
+          sessionData.currentStep >= 0 &&
+          sessionData.currentStep < STEPS.length
+        ) {
+          setCurrentStep(sessionData.currentStep);
+        }
+
+        setError(null);
+        setProcessingLog([{ time: new Date().toLocaleTimeString(), message: `Session restored from ${file.name}` }]);
+      } catch (err) {
+        setError(`Failed to import session: ${err.message}`);
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset file input
+    event.target.value = '';
+  }, []);
+
+  // Clear session from localStorage and reset state
+  const clearSession = useCallback(() => {
+    if (!window.confirm('Are you sure you want to clear all session data? This cannot be undone.')) {
+      return;
+    }
+
+    // Clear localStorage
+    try {
+      Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+    } catch (err) {
+      console.error('Error clearing localStorage:', err);
+    }
+
+    // Reset state
+    setProjectName('');
+    setInputContent('');
+    setStepOutputs({});
+    setCurrentStep(0);
+    setOrganizationBranch(null);
+    setUploadedFiles([]);
+    setProcessingLog([]);
+    setError(null);
+    setShowBranchSelector(false);
+  }, []);
+
   const completedSteps = Object.keys(stepOutputs).length;
   const progressPercent = Math.round((completedSteps / STEPS.length) * 100);
   const currentStepInfo = STEPS[currentStep];
@@ -1706,11 +1981,96 @@ export default function VianeoSprintAutomator() {
                 </div>
               ))}
             </div>
+            {/* Download Buttons */}
             {completedSteps > 0 && (
-              <button onClick={downloadAllOutputs} style={styles.downloadAllButton}>
-                ↓ Download All Outputs
-              </button>
+              <div style={{ padding: '16px', borderTop: `1px solid ${COLORS.border}` }}>
+                <button onClick={downloadAllAsZip} style={styles.downloadAllButton}>
+                  ↓ Download ZIP Bundle
+                </button>
+                <button
+                  onClick={downloadAllOutputs}
+                  style={{ ...styles.downloadAllButton, marginTop: '8px', backgroundColor: COLORS.primaryLight }}
+                >
+                  ↓ Download Markdown
+                </button>
+              </div>
             )}
+
+            {/* Session Management */}
+            <div style={{ padding: '16px', borderTop: `1px solid ${COLORS.border}` }}>
+              <div style={{ fontSize: '11px', fontWeight: '600', color: COLORS.textMuted, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Session
+              </div>
+              <input
+                type="file"
+                ref={sessionInputRef}
+                accept=".json"
+                onChange={importSession}
+                style={{ display: 'none' }}
+              />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={exportSession}
+                  disabled={completedSteps === 0}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    backgroundColor: completedSteps > 0 ? COLORS.background : COLORS.borderLight,
+                    color: completedSteps > 0 ? COLORS.textPrimary : COLORS.textMuted,
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: '8px',
+                    cursor: completedSteps > 0 ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  Export
+                </button>
+                <button
+                  onClick={() => sessionInputRef.current?.click()}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    backgroundColor: COLORS.background,
+                    color: COLORS.textPrimary,
+                    border: `1px solid ${COLORS.border}`,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Import
+                </button>
+              </div>
+              <button
+                onClick={clearSession}
+                disabled={completedSteps === 0 && !inputContent.trim()}
+                style={{
+                  width: '100%',
+                  marginTop: '8px',
+                  padding: '10px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  backgroundColor: (completedSteps > 0 || inputContent.trim()) ? '#FEF2F2' : COLORS.borderLight,
+                  color: (completedSteps > 0 || inputContent.trim()) ? COLORS.error : COLORS.textMuted,
+                  border: `1px solid ${(completedSteps > 0 || inputContent.trim()) ? '#FECACA' : COLORS.border}`,
+                  borderRadius: '8px',
+                  cursor: (completedSteps > 0 || inputContent.trim()) ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Clear Session
+              </button>
+              {/* Auto-save indicator */}
+              <div style={{
+                marginTop: '12px',
+                fontSize: '11px',
+                color: COLORS.textMuted,
+                textAlign: 'center',
+              }}>
+                Auto-saving enabled
+              </div>
+            </div>
           </div>
         </aside>
 
@@ -1855,9 +2215,20 @@ export default function VianeoSprintAutomator() {
             <div style={{ ...styles.card, marginTop: '24px' }}>
               <div style={styles.outputHeader}>
                 <h3 style={styles.cardTitle}>Output</h3>
-                <button onClick={() => downloadOutput(currentStep)} style={styles.downloadButton}>
-                  ↓ Download Markdown
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => copyToClipboard(currentStep)}
+                    style={{
+                      ...styles.downloadButton,
+                      backgroundColor: copyFeedback === currentStep ? COLORS.success : COLORS.primaryLight,
+                    }}
+                  >
+                    {copyFeedback === currentStep ? '✓ Copied!' : '📋 Copy'}
+                  </button>
+                  <button onClick={() => downloadOutput(currentStep)} style={styles.downloadButton}>
+                    ↓ Download
+                  </button>
+                </div>
               </div>
               <div style={styles.outputContent}>
                 <pre style={styles.outputText}>{stepOutputs[currentStep]}</pre>
