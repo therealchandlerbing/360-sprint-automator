@@ -30,37 +30,20 @@
 
 ## Features
 
-### Core Capabilities
-
-| Feature | Description |
-|---------|-------------|
-| **13-Step Wizard** | Guided process through Foundation, Deep Dive, Synthesis, and Viability phases |
-| **Claude AI Analysis** | Intelligent document processing with context-aware prompts |
-| **Secure API Proxy** | API key stored server-side only, never exposed to browser |
-
-### Document Processing
-
-| Feature | Description |
-|---------|-------------|
-| **Multi-format Support** | PDF, DOCX, TXT, and Markdown file parsing |
-| **Drag-and-drop** | Easy file management with visual feedback |
-| **Content Aggregation** | Combine multiple source documents |
-
-### Session & Export
-
-| Feature | Description |
-|---------|-------------|
-| **Auto-save** | Progress saved automatically to localStorage |
-| **Session Import/Export** | Save and restore complete sessions as JSON |
-| **Multiple Export Formats** | Markdown, HTML, or ZIP bundle with manifest |
-
-### User Experience
-
-| Feature | Description |
-|---------|-------------|
-| **Mobile Responsive** | Full functionality on all devices |
-| **Real-time Logging** | Monitor API calls and step progress |
-| **Progress Tracking** | Visual sidebar with completion status |
+| Category | Feature | Description |
+|----------|---------|-------------|
+| **Core** | 13-Step Wizard | Guided process through Foundation, Deep Dive, Synthesis, and Viability phases |
+| | Claude AI Analysis | Intelligent document processing with context-aware prompts |
+| | Secure API Proxy | API key stored server-side only, never exposed to browser |
+| **Document Processing** | Multi-format Support | PDF, DOCX, TXT, and Markdown file parsing |
+| | Drag-and-drop | Easy file management with visual feedback |
+| | Content Aggregation | Combine multiple source documents |
+| **Session & Export** | Auto-save | Progress saved automatically to localStorage |
+| | Session Import/Export | Save and restore complete sessions as JSON |
+| | Multiple Export Formats | Markdown, HTML, or ZIP bundle with manifest |
+| **User Experience** | Mobile Responsive | Full functionality on all devices |
+| | Real-time Logging | Monitor API calls and step progress |
+| | Progress Tracking | Visual sidebar with completion status |
 
 ---
 
@@ -136,7 +119,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 │   │   ├── useClaudeAPI.js    # API communication
 │   │   ├── useDebounce.js     # Input debouncing
 │   │   ├── useMobileMenu.js   # Mobile navigation
-│   │   └── useSessionPersistence.js
+│   │   └── useSessionPersistence.js # Session persistence
 │   ├── styles/
 │   │   └── appStyles.js       # CSS-in-JS styles
 │   ├── utils/                 # Helper functions
