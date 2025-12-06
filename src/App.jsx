@@ -1434,6 +1434,7 @@ export default function VianeoSprintAutomator() {
   const [error, setError] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(null);
   const [isSessionLoaded, setIsSessionLoaded] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const fileInputRef = useRef(null);
   const sessionInputRef = useRef(null);
 
@@ -1452,9 +1453,12 @@ export default function VianeoSprintAutomator() {
       if (savedInputContent) setInputContent(savedInputContent);
       if (savedStepOutputs) {
         try {
-          setStepOutputs(JSON.parse(savedStepOutputs));
-        } catch {
-          // Invalid JSON, ignore
+          const parsed = JSON.parse(savedStepOutputs);
+          if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+            setStepOutputs(parsed);
+          }
+        } catch (err) {
+          console.error('Error parsing saved step outputs:', err);
         }
       }
       if (savedBranch) setOrganizationBranch(savedBranch);
@@ -1464,8 +1468,8 @@ export default function VianeoSprintAutomator() {
           setCurrentStep(step);
         }
       }
-    } catch {
-      // localStorage not available or error, continue with defaults
+    } catch (err) {
+      console.error('Error loading session from localStorage:', err);
     }
     setIsSessionLoaded(true);
   }, []);
@@ -1483,11 +1487,14 @@ export default function VianeoSprintAutomator() {
       localStorage.setItem(STORAGE_KEYS.STEP_OUTPUTS, JSON.stringify(stepOutputs));
       localStorage.setItem(STORAGE_KEYS.CURRENT_STEP, String(currentStep));
       localStorage.setItem(STORAGE_KEYS.LAST_SAVED, new Date().toISOString());
+      // Handle organizationBranch - remove from storage if null, otherwise save
       if (organizationBranch) {
         localStorage.setItem(STORAGE_KEYS.ORGANIZATION_BRANCH, organizationBranch);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.ORGANIZATION_BRANCH);
       }
-    } catch {
-      // localStorage not available or quota exceeded, silently fail
+    } catch (err) {
+      console.error('Error saving session to localStorage:', err);
     }
   }, [isSessionLoaded, projectName, inputContent, stepOutputs, currentStep, organizationBranch]);
 
@@ -1509,6 +1516,30 @@ export default function VianeoSprintAutomator() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [stepOutputs, inputContent]);
+
+  // ============================================
+  // Mobile Menu: Body scroll lock and Escape key
+  // ============================================
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isMobileMenuOpen]);
 
   const addLog = useCallback((message) => {
     setProcessingLog(prev => [...prev, { time: new Date().toLocaleTimeString(), message }]);
@@ -1720,46 +1751,52 @@ export default function VianeoSprintAutomator() {
 
   // Download all outputs as ZIP bundle with manifest
   const downloadAllAsZip = useCallback(async () => {
-    const date = new Date().toISOString().split('T')[0];
-    const timestamp = new Date().toISOString();
-    const safeName = (projectName || 'Project').replace(/\s+/g, '_');
+    try {
+      const date = new Date().toISOString().split('T')[0];
+      const timestamp = new Date().toISOString();
+      const safeName = (projectName || 'Project').replace(/\s+/g, '_');
 
-    const zip = new JSZip();
+      const zip = new JSZip();
 
-    // Add each step output as a separate file
-    const files = [];
-    Object.entries(stepOutputs)
-      .sort(([a], [b]) => parseInt(a) - parseInt(b))
-      .forEach(([stepId, output]) => {
-        const step = STEPS[parseInt(stepId)];
-        const filename = `${String(stepId).padStart(2, '0')}${step.outputFile.replace(/^_\d+/, '')}.md`;
-        zip.file(filename, output);
-        files.push({
-          step: parseInt(stepId),
-          filename: filename,
-          size: output.length
+      // Add each step output as a separate file
+      const files = [];
+      Object.entries(stepOutputs)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .forEach(([stepId, output]) => {
+          const step = STEPS[parseInt(stepId)];
+          // Maintain underscore prefix for consistency (e.g., 00_ExecutiveBrief.md)
+          const filename = `${step.outputFile.replace(/^_\d+/, '_' + String(stepId).padStart(2, '0'))}.md`;
+          zip.file(filename, output);
+          files.push({
+            step: parseInt(stepId),
+            filename: filename,
+            size: output.length
+          });
         });
-      });
 
-    // Create manifest
-    const manifest = {
-      projectName: projectName || 'Project',
-      generatedAt: timestamp,
-      completedSteps: Object.keys(stepOutputs).map(id => parseInt(id)).sort((a, b) => a - b),
-      organizationBranch: organizationBranch,
-      totalSteps: STEPS.length,
-      files: files
-    };
-    zip.file('_manifest.json', JSON.stringify(manifest, null, 2));
+      // Create manifest
+      const manifest = {
+        projectName: projectName || 'Project',
+        generatedAt: timestamp,
+        completedSteps: Object.keys(stepOutputs).map(id => parseInt(id)).sort((a, b) => a - b),
+        organizationBranch: organizationBranch,
+        totalSteps: STEPS.length,
+        files: files
+      };
+      zip.file('_manifest.json', JSON.stringify(manifest, null, 2));
 
-    // Generate and download ZIP
-    const content = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${safeName}_VIANEO_Sprint_${date}.zip`;
-    a.click();
-    URL.revokeObjectURL(url);
+      // Generate and download ZIP
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeName}_VIANEO_Sprint_${date}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error creating ZIP bundle:', err);
+      setError(`Failed to create ZIP bundle: ${err.message}`);
+    }
   }, [stepOutputs, projectName, organizationBranch]);
 
   // Copy output to clipboard
@@ -1772,15 +1809,26 @@ export default function VianeoSprintAutomator() {
       setCopyFeedback(stepId);
       setTimeout(() => setCopyFeedback(null), 2000);
     } catch {
-      // Fallback for older browsers
-      const textarea = document.createElement('textarea');
-      textarea.value = output;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopyFeedback(stepId);
-      setTimeout(() => setCopyFeedback(null), 2000);
+      // Fallback for older browsers using deprecated execCommand
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = output;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (success) {
+          setCopyFeedback(stepId);
+          setTimeout(() => setCopyFeedback(null), 2000);
+        } else {
+          setError('Failed to copy to clipboard');
+        }
+      } catch (fallbackErr) {
+        console.error('Clipboard fallback failed:', fallbackErr);
+        setError('Failed to copy to clipboard');
+      }
     }
   }, [stepOutputs]);
 
@@ -1818,18 +1866,31 @@ export default function VianeoSprintAutomator() {
       try {
         const sessionData = JSON.parse(e.target.result);
 
-        // Validate session data
-        if (!sessionData.version || !sessionData.stepOutputs) {
-          setError('Invalid session file format');
+        // Validate session data - check version and stepOutputs structure
+        if (
+          !sessionData.version ||
+          typeof sessionData.stepOutputs !== 'object' ||
+          sessionData.stepOutputs === null ||
+          Array.isArray(sessionData.stepOutputs)
+        ) {
+          setError('Invalid session file format or missing critical data');
           return;
         }
 
-        // Restore session state
-        if (sessionData.projectName) setProjectName(sessionData.projectName);
-        if (sessionData.organizationBranch) setOrganizationBranch(sessionData.organizationBranch);
-        if (typeof sessionData.currentStep === 'number') setCurrentStep(sessionData.currentStep);
-        if (sessionData.stepOutputs) setStepOutputs(sessionData.stepOutputs);
-        if (sessionData.inputContent) setInputContent(sessionData.inputContent);
+        // Restore session state using nullish coalescing for proper falsy value handling
+        setProjectName(sessionData.projectName ?? '');
+        setOrganizationBranch(sessionData.organizationBranch ?? null);
+        setInputContent(sessionData.inputContent ?? '');
+        setStepOutputs(sessionData.stepOutputs);
+
+        // Validate currentStep range before setting
+        if (
+          typeof sessionData.currentStep === 'number' &&
+          sessionData.currentStep >= 0 &&
+          sessionData.currentStep < STEPS.length
+        ) {
+          setCurrentStep(sessionData.currentStep);
+        }
 
         setError(null);
         setProcessingLog([{ time: new Date().toLocaleTimeString(), message: `Session restored from ${file.name}` }]);
@@ -1852,8 +1913,8 @@ export default function VianeoSprintAutomator() {
     // Clear localStorage
     try {
       Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
-    } catch {
-      // localStorage not available
+    } catch (err) {
+      console.error('Error clearing localStorage:', err);
     }
 
     // Reset state
@@ -1877,24 +1938,168 @@ export default function VianeoSprintAutomator() {
 
   return (
     <div style={styles.container}>
-      {/* CSS Keyframes */}
+      {/* CSS Keyframes and Responsive Styles */}
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         input:focus, textarea:focus { border-color: ${COLORS.primaryAccent} !important; }
         button:hover:not(:disabled) { transform: translateY(-1px); }
+
+        /* Base styles for responsive elements (hidden on desktop) */
+        .mobile-menu-btn { display: none; }
+        .mobile-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 999;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .mobile-menu-btn {
+            display: flex;
+          }
+          .mobile-overlay {
+            display: block;
+          }
+          .header-inner {
+            padding: 12px 16px !important;
+          }
+          .header-title {
+            font-size: 16px !important;
+          }
+          .header-subtitle {
+            display: none !important;
+          }
+          .progress-section {
+            display: none !important;
+          }
+          .main-layout {
+            flex-direction: column !important;
+            padding: 16px !important;
+            gap: 16px !important;
+          }
+          .sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 85% !important;
+            max-width: 320px !important;
+            height: 100vh !important;
+            z-index: 1000 !important;
+            transform: translateX(-100%) !important;
+            transition: transform 0.3s ease !important;
+          }
+          .sidebar.open {
+            transform: translateX(0) !important;
+          }
+          .sidebar-card {
+            height: 100% !important;
+            border-radius: 0 !important;
+            position: relative !important;
+            top: 0 !important;
+          }
+          .step-title {
+            font-size: 22px !important;
+          }
+          .card-body {
+            padding: 16px !important;
+          }
+          .card-header {
+            padding: 14px 16px !important;
+          }
+          .upload-zone {
+            padding: 24px 16px !important;
+          }
+          .branch-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .nav-buttons {
+            flex-direction: column !important;
+            gap: 12px !important;
+          }
+          .nav-buttons button {
+            width: 100% !important;
+          }
+          .output-header {
+            flex-direction: column !important;
+            gap: 12px !important;
+            align-items: stretch !important;
+          }
+          .output-buttons {
+            display: flex !important;
+            gap: 8px !important;
+          }
+          .output-buttons button {
+            flex: 1 !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .logo {
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 18px !important;
+          }
+          .header-title {
+            font-size: 14px !important;
+          }
+          .step-title {
+            font-size: 18px !important;
+          }
+          .process-button {
+            padding: 14px 16px !important;
+            font-size: 14px !important;
+          }
+        }
       `}</style>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="mobile-overlay"
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Header */}
       <header style={styles.header}>
-        <div style={styles.headerInner}>
+        <div className="header-inner" style={styles.headerInner}>
           <div style={styles.logoSection}>
-            <div style={styles.logo}>V</div>
+            {/* Mobile Menu Button */}
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="navigation-sidebar"
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                marginRight: '8px',
+              }}
+            >
+              <span style={{ color: COLORS.white, fontSize: '20px' }} aria-hidden="true">
+                {isMobileMenuOpen ? '✕' : '☰'}
+              </span>
+            </button>
+            <div className="logo" style={styles.logo}>V</div>
             <div>
-              <h1 style={styles.headerTitle}>VIANEO Sprint Automator</h1>
-              <p style={styles.headerSubtitle}>Evidence-Based Business Validation</p>
+              <h1 className="header-title" style={styles.headerTitle}>VIANEO Sprint Automator</h1>
+              <p className="header-subtitle" style={styles.headerSubtitle}>Evidence-Based Business Validation</p>
             </div>
           </div>
-          <div style={styles.progressSection}>
+          <div className="progress-section" style={styles.progressSection}>
             <div style={styles.progressLabel}>Sprint Progress</div>
             <div style={styles.progressValue}>{completedSteps} of {STEPS.length} steps</div>
             <div style={styles.progressBar}>
@@ -1905,10 +2110,16 @@ export default function VianeoSprintAutomator() {
       </header>
 
       {/* Main Layout */}
-      <div style={styles.mainLayout}>
+      <div className="main-layout" style={styles.mainLayout}>
         {/* Sidebar */}
-        <aside style={styles.sidebar}>
-          <div style={styles.sidebarCard}>
+        <aside
+          id="navigation-sidebar"
+          role="navigation"
+          aria-label="Sprint steps navigation"
+          className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}
+          style={styles.sidebar}
+        >
+          <div className="sidebar-card" style={styles.sidebarCard}>
             <div style={styles.sidebarHeader}>
               <h2 style={styles.sidebarTitle}>Steps</h2>
             </div>
@@ -1924,7 +2135,10 @@ export default function VianeoSprintAutomator() {
                     return (
                       <button
                         key={step.id}
-                        onClick={() => setCurrentStep(step.id)}
+                        onClick={() => {
+                          setCurrentStep(step.id);
+                          setIsMobileMenuOpen(false);
+                        }}
                         style={{
                           ...styles.stepButton,
                           ...(isActive ? { backgroundColor: COLORS.phases[phase].light } : {}),
@@ -2046,21 +2260,21 @@ export default function VianeoSprintAutomator() {
               <span style={{ ...styles.phaseBadge, backgroundColor: phaseColor.bg }}>{currentPhase}</span>
               <span style={styles.stepIndicator}>Step {currentStepInfo.id} of 12</span>
             </div>
-            <h2 style={styles.stepTitle}>{currentStepInfo.name}</h2>
+            <h2 className="step-title" style={styles.stepTitle}>{currentStepInfo.name}</h2>
             <p style={styles.stepDescription}>{currentStepInfo.description}</p>
           </div>
 
           {/* Branch Selector */}
           {showBranchSelector && currentStep === 1 && (
             <div style={styles.card}>
-              <div style={styles.cardHeader}>
+              <div className="card-header" style={styles.cardHeader}>
                 <h3 style={styles.cardTitle}>Select Application Format</h3>
               </div>
-              <div style={styles.cardBody}>
+              <div className="card-body" style={styles.cardBody}>
                 <p style={{ margin: '0 0 16px', color: COLORS.textSecondary }}>
                   Choose the program format for the application form:
                 </p>
-                <div style={styles.branchGrid}>
+                <div className="branch-grid" style={styles.branchGrid}>
                   {[
                     { id: '360SIS', name: '360 Social Impact Studios', icon: '🌍', desc: 'Social impact metrics, SDG alignment' },
                     { id: 'CNEN', name: 'CNEN', icon: '🇧🇷', desc: 'Brazil Nuclear Commission format' }
@@ -2085,10 +2299,10 @@ export default function VianeoSprintAutomator() {
           {/* Input Section (Step 0) */}
           {currentStep === 0 && (
             <div style={styles.card}>
-              <div style={styles.cardHeader}>
+              <div className="card-header" style={styles.cardHeader}>
                 <h3 style={styles.cardTitle}>Source Materials</h3>
               </div>
-              <div style={styles.cardBody}>
+              <div className="card-body" style={styles.cardBody}>
                 <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: COLORS.textSecondary, marginBottom: '8px' }}>
                     Project Name
@@ -2103,7 +2317,7 @@ export default function VianeoSprintAutomator() {
                 </div>
 
                 <input type="file" ref={fileInputRef} multiple accept=".txt,.md,.pdf,.doc,.docx" onChange={handleFileUpload} style={{ display: 'none' }} />
-                <div onClick={() => fileInputRef.current?.click()} style={styles.uploadZone}>
+                <div className="upload-zone" onClick={() => fileInputRef.current?.click()} style={styles.uploadZone}>
                   <div style={styles.uploadIcon}>📄</div>
                   <div style={styles.uploadText}>Drop files or click to upload</div>
                   <div style={styles.uploadHint}>TXT, MD, PDF, DOCX supported</div>
@@ -2146,6 +2360,7 @@ export default function VianeoSprintAutomator() {
 
           {/* Process Button */}
           <button
+            className="process-button"
             onClick={processStep}
             disabled={isProcessing || (currentStep === 0 && !inputContent.trim())}
             style={{
@@ -2177,9 +2392,9 @@ export default function VianeoSprintAutomator() {
           {/* Output Display */}
           {stepOutputs[currentStep] && (
             <div style={{ ...styles.card, marginTop: '24px' }}>
-              <div style={styles.outputHeader}>
+              <div className="output-header" style={styles.outputHeader}>
                 <h3 style={styles.cardTitle}>Output</h3>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="output-buttons" style={{ display: 'flex', gap: '8px' }}>
                   <button
                     onClick={() => copyToClipboard(currentStep)}
                     style={{
@@ -2201,7 +2416,7 @@ export default function VianeoSprintAutomator() {
           )}
 
           {/* Navigation */}
-          <div style={styles.navigation}>
+          <div className="nav-buttons" style={styles.navigation}>
             <button
               onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
               disabled={currentStep === 0}
