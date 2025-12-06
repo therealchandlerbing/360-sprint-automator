@@ -11,6 +11,9 @@
     "test": "echo \"No tests configured yet\" && exit 0"
   },
   "dependencies": {
+    "chart.js": "^4.5.1",
+    "docx": "^9.5.1",
+    "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
     "mammoth": "^1.11.0",
     "marked": "^17.0.1",
