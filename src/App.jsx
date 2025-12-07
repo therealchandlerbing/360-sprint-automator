@@ -40,6 +40,7 @@ import {
   ExpressModeSelector,
   ExpressProcessing,
   ExpressCompletion,
+  MethodologyModal,
 } from './components/index.js';
 
 // ============================================
@@ -82,6 +83,7 @@ export default function VianeoSprintAutomator() {
   const [error, setError] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(null);
   const [assessmentMode, setAssessmentMode] = useState('step-by-step'); // 'step-by-step' | 'express'
+  const [showMethodologyModal, setShowMethodologyModal] = useState(false);
 
   // Express Assessment hook - handles all Express mode state and logic
   const {
@@ -406,6 +408,13 @@ export default function VianeoSprintAutomator() {
           completedSteps={completedSteps}
           isMobileMenuOpen={isMobileMenuOpen}
           onToggleMobileMenu={toggleMobileMenu}
+          onOpenMethodology={() => setShowMethodologyModal(true)}
+        />
+
+        {/* Methodology Modal */}
+        <MethodologyModal
+          isOpen={showMethodologyModal}
+          onClose={() => setShowMethodologyModal(false)}
         />
 
         {/* Main Layout */}

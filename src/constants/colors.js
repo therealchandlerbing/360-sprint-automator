@@ -35,4 +35,13 @@ export const COLORS = {
   successLight: '#D1FAE5',
   warning: '#F59E0B',
   error: '#EF4444',
+
+  // VIANEO Dimension Colors (for Methodology Modal)
+  dimensions: {
+    legitimacy: { bg: '#1E3A5F', light: '#E8F4F8' },    // Deep blue
+    desirability: { bg: '#0D5A66', light: '#E0F2F1' },  // Teal
+    acceptability: { bg: '#2D5A3D', light: '#E8F5E9' }, // Forest green
+    feasibility: { bg: '#5A4A2D', light: '#FEF3E2' },   // Warm brown
+    viability: { bg: '#5A2D5A', light: '#F3E8F3' },     // Purple
+  },
 };

@@ -21,3 +21,6 @@ export { ExpressCompletion } from './ExpressCompletion.jsx';
 // V2.0 Components
 export { default as ErrorBoundary } from './ErrorBoundary.jsx';
 export { default as VirtualizedLog, SimpleProcessingLog } from './VirtualizedLog.jsx';
+
+// Methodology Modal
+export { MethodologyModal } from './MethodologyModal.jsx';
