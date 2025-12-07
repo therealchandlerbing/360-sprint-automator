@@ -255,24 +255,24 @@ const ExpressModeSelectorComponent = ({
               </div>
             </div>
             <p style={styles.optionDescription}>
-              Comprehensive evaluation in single execution for board presentations and investment committees.
+              Fast, focused evaluation with document upload support and visual reports.
             </p>
             <ul style={styles.featureList}>
               <li style={styles.featureItem}>
                 <span style={styles.featureIcon}>&#10003;</span>
-                Best for: Executive presentation, board meetings
+                Best for: Quick decisions, pitch deck analysis
               </li>
               <li style={styles.featureItem}>
                 <span style={styles.featureIcon}>&#10003;</span>
-                Output: Professional 20-25 page DOCX report
+                Output: Professional PDF report with visualizations
               </li>
               <li style={styles.featureItem}>
                 <span style={styles.featureIcon}>&#10003;</span>
-                Time: 15-20 minutes
+                Time: 10-15 minutes
               </li>
               <li style={styles.featureItem}>
                 <span style={styles.featureIcon}>&#10003;</span>
-                All 13 steps synthesized in one analysis
+                Upload pitch decks, business plans, or enter manually
               </li>
             </ul>
             <div style={styles.outputBadge}>

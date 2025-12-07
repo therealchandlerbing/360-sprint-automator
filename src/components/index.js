@@ -18,6 +18,10 @@ export { ExpressModeSelector } from './ExpressModeSelector.jsx';
 export { ExpressProcessing } from './ExpressProcessing.jsx';
 export { ExpressCompletion } from './ExpressCompletion.jsx';
 
+// Express V2 components
+export { ExpressV2Input } from './ExpressV2Input.jsx';
+export { ExpressV2Results } from './ExpressV2Results.jsx';
+
 // V2.0 Components
 export { default as ErrorBoundary } from './ErrorBoundary.jsx';
 export { default as VirtualizedLog, SimpleProcessingLog } from './VirtualizedLog.jsx';

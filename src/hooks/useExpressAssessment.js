@@ -5,8 +5,10 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { getExpressModePrompts, validateExpressAssessment } from '../constants/expressPrompt.js';
+import { getExpressV2Prompts, validateExpressV2Assessment, calculateOverallScore, getGateRecommendation } from '../constants/expressPromptV2.js';
 import { generateDOCXReport, downloadDOCX, generateFilename } from '../utils/docxGenerator.js';
 import { generateDashboardHTML, generateDashboardFilename } from '../utils/dashboardGenerator.js';
+import { downloadHTMLReport, printHTMLReport } from '../utils/pdfGeneratorV2.js';
 import { parseLLMJson, extractResponseText } from '../utils/jsonParser.js';
 
 /**
@@ -311,17 +313,164 @@ export function useExpressAssessment({ projectName, inputContent, callClaudeAPI,
     URL.revokeObjectURL(url);
   }, [dashboard.outputs, projectName]);
 
+  /**
+   * Process Express V2 Assessment
+   * Streamlined version with focused 5-dimension analysis
+   */
+  const processExpressV2Assessment = useCallback(async (formData) => {
+    if (!formData.companyName || !formData.problem) {
+      setError('Please provide at least a company name and problem statement');
+      return;
+    }
+
+    abortRef.current = false;
+
+    // Initialize processing state
+    setExpressAssessment({
+      status: 'processing',
+      progress: { stage: 'foundation', percentage: 5, message: 'Starting VIANEO assessment...' },
+      startTime: Date.now(),
+      outputs: { assessmentData: null, reportBlob: null, reportURL: null },
+      error: null,
+    });
+    setDashboard(INITIAL_DASHBOARD_STATE);
+    setError(null);
+
+    try {
+      // Get the Express V2 prompts
+      const { systemPrompt, userPrompt } = getExpressV2Prompts(formData);
+
+      // Update progress stages for V2
+      const V2_PROGRESS_STAGES = [
+        { percentage: 10, message: 'Analyzing Legitimacy & Market Validation...' },
+        { percentage: 30, message: 'Evaluating Desirability & Product-Market Fit...' },
+        { percentage: 50, message: 'Assessing Acceptability & Ecosystem Support...' },
+        { percentage: 70, message: 'Determining Feasibility & Deliverability...' },
+        { percentage: 85, message: 'Calculating Viability & Sustainability...' },
+        { percentage: 90, message: 'Performing Cross-Dimensional Analysis...' },
+      ];
+
+      let currentStage = 0;
+      const progressInterval = setInterval(() => {
+        if (abortRef.current || currentStage >= V2_PROGRESS_STAGES.length) {
+          clearInterval(progressInterval);
+          return;
+        }
+        setExpressAssessment(prev => ({
+          ...prev,
+          progress: {
+            stage: 'processing',
+            percentage: V2_PROGRESS_STAGES[currentStage].percentage,
+            message: V2_PROGRESS_STAGES[currentStage].message,
+          },
+        }));
+        currentStage++;
+      }, 3000); // Update every 3 seconds
+
+      // Call Claude API with Express V2 prompt (reduced max_tokens)
+      const data = await callClaudeAPI(systemPrompt, userPrompt, null, { maxTokens: 8000 });
+
+      clearInterval(progressInterval);
+
+      if (abortRef.current) {
+        setExpressAssessment(prev => ({ ...prev, status: 'idle' }));
+        return;
+      }
+
+      // Extract the text response
+      const responseText = extractResponseText(data);
+
+      // Update progress: Parsing response
+      setExpressAssessment(prev => ({
+        ...prev,
+        progress: { stage: 'processing', percentage: 92, message: 'Parsing assessment data...' },
+      }));
+
+      // Parse JSON from response
+      let assessmentData;
+      try {
+        assessmentData = parseLLMJson(responseText);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        const preview = responseText.substring(0, 200).replace(/\n/g, ' ');
+        throw new Error(
+          `Failed to parse assessment data. The AI response was not in the expected JSON format. ` +
+          `Response preview: "${preview}${responseText.length > 200 ? '...' : ''}"`
+        );
+      }
+
+      // Add computed fields
+      assessmentData.companyName = formData.companyName;
+      assessmentData.overallScore = calculateOverallScore(assessmentData.scores);
+      assessmentData.gate = getGateRecommendation(assessmentData.overallScore);
+
+      // Validate the assessment data
+      const validation = validateExpressV2Assessment(assessmentData);
+      if (!validation.valid) {
+        console.warn('Assessment validation warnings:', validation.warnings);
+        console.error('Assessment validation errors:', validation.errors);
+      }
+
+      if (abortRef.current) {
+        setExpressAssessment(prev => ({ ...prev, status: 'idle' }));
+        return;
+      }
+
+      // Update progress: Report ready
+      setExpressAssessment(prev => ({
+        ...prev,
+        status: 'complete',
+        progress: { stage: 'complete', percentage: 100, message: 'Assessment complete!' },
+        outputs: { assessmentData, reportBlob: null, reportURL: null },
+      }));
+
+    } catch (err) {
+      console.error('Express V2 assessment error:', err);
+      setExpressAssessment(prev => ({
+        ...prev,
+        status: 'error',
+        error: err.message || 'An unknown error occurred',
+      }));
+      setError(`Express V2 Assessment Error: ${err.message}`);
+    }
+  }, [callClaudeAPI, setError]);
+
+  /**
+   * Download Express V2 Report (HTML)
+   */
+  const downloadExpressV2Report = useCallback(() => {
+    const { assessmentData } = expressAssessment.outputs;
+    if (!assessmentData) return;
+
+    downloadHTMLReport(assessmentData);
+  }, [expressAssessment.outputs]);
+
+  /**
+   * Print Express V2 Report (open in print dialog)
+   */
+  const printExpressV2Report = useCallback(() => {
+    const { assessmentData } = expressAssessment.outputs;
+    if (!assessmentData) return;
+
+    printHTMLReport(assessmentData);
+  }, [expressAssessment.outputs]);
+
   return {
     // State
     expressAssessment,
     dashboard,
 
-    // Actions
+    // V1 Actions
     processExpressAssessment,
     cancelExpressAssessment,
     downloadExpressReport,
     startNewExpressAssessment,
     generateDashboard,
     downloadDashboard,
+
+    // V2 Actions
+    processExpressV2Assessment,
+    downloadExpressV2Report,
+    printExpressV2Report,
   };
 }
