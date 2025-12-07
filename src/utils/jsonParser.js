@@ -57,11 +57,14 @@ export const parseLLMJson = (responseText) => {
   }
 
   // Strategy 4: Find first [ and last ] to extract JSON array
+  // This handles LLM responses that return arrays instead of objects.
+  // We only extract an array if there's no object OR the array appears before
+  // the first object bracket - this prevents incorrectly extracting an array
+  // that's nested inside an object (e.g., {"items": [1,2,3]} should not extract [1,2,3])
   const arrayStart = responseText.indexOf('[');
   const arrayEnd = responseText.lastIndexOf(']');
 
   if (arrayStart !== -1 && arrayEnd !== -1 && arrayEnd > arrayStart) {
-    // Only use array extraction if there's no object, or array comes first
     if (jsonStart === -1 || arrayStart < jsonStart) {
       try {
         const extracted = responseText.substring(arrayStart, arrayEnd + 1);

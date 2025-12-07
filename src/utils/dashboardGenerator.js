@@ -41,9 +41,13 @@ export const generateDashboardHTML = (assessmentData, projectNameOverride) => {
     throw new Error('No assessment data available');
   }
 
-  // Extract and sanitize values
-  const projectName = escapeHtml(projectNameOverride || assessmentData.metadata?.projectName || 'Assessment');
-  const assessmentDate = escapeHtml(assessmentData.metadata?.assessmentDate || new Date().toISOString().split('T')[0]);
+  // Extract raw values
+  const rawProjectName = projectNameOverride || assessmentData.metadata?.projectName || 'Assessment';
+  const rawAssessmentDate = assessmentData.metadata?.assessmentDate || new Date().toISOString().split('T')[0];
+
+  // Sanitize for HTML output (distinct names prevent confusion between raw/escaped)
+  const escapedProjectName = escapeHtml(rawProjectName);
+  const escapedAssessmentDate = escapeHtml(rawAssessmentDate);
   const recommendation = assessmentData.executiveSummary?.recommendation || 'N/A';
   const recommendationDisplay = escapeHtml(recommendation.replace('_', ' '));
   const investmentScore = assessmentData.executiveSummary?.investmentReadinessScore || '--';
@@ -68,8 +72,10 @@ export const generateDashboardHTML = (assessmentData, projectNameOverride) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>360 Business Validation Dashboard - ${projectName}</title>
-  <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
+  <title>360 Business Validation Dashboard - ${escapedProjectName}</title>
+  <!-- Note: Tailwind Play CDN used for standalone HTML dashboard. This is acceptable for
+       offline/downloaded reports. For production web apps, use build-time Tailwind CSS. -->
+  <script src="https://cdn.tailwindcss.com/3.4.1" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-BgkHqOx+R5MZaH4g/KbELKXhQCQM0HZ2u+V1r8q5OvfR6pT8HxL9V0FbHLn6Mj35" crossorigin="anonymous"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -79,7 +85,7 @@ export const generateDashboardHTML = (assessmentData, projectNameOverride) => {
 <body class="bg-gray-100 min-h-screen">
   <header class="bg-gradient-to-r from-slate-800 to-slate-700 text-white p-6">
     <h1 class="text-2xl font-bold">360 Business Validation Dashboard</h1>
-    <p class="text-gray-300">${projectName} | ${assessmentDate}</p>
+    <p class="text-gray-300">${escapedProjectName} | ${escapedAssessmentDate}</p>
   </header>
 
   <main class="container mx-auto p-6">

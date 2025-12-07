@@ -76,36 +76,34 @@ export function useExpressAssessment({ projectName, inputContent, callClaudeAPI,
   }, [expressAssessment.outputs.reportURL, dashboard.outputs.dashboardURL]);
 
   /**
+   * Progress stage matchers - data-driven approach for maintainability
+   * Each entry: { keywords: string[], percentage: number, stage: string }
+   * Order matters: first match wins
+   */
+  const PROGRESS_MATCHERS = [
+    { keywords: ['viability', 'gate'], percentage: 85, stage: 'viability' },
+    { keywords: ['features', 'matrix'], percentage: 80, stage: 'synthesis' },
+    { keywords: ['synthesis', 'diagnostic comment'], percentage: 70, stage: 'synthesis' },
+    { keywords: ['persona', 'ecosystem'], percentage: 55, stage: 'deep-dive' },
+    { keywords: ['legitimacy', 'needs'], percentage: 45, stage: 'deep-dive' },
+    { keywords: ['maturity', 'market'], percentage: 35, stage: 'deep-dive' },
+    { keywords: ['diagnostic', '40Q'], percentage: 25, stage: 'foundation' },
+  ];
+
+  /**
    * Determine progress stage and percentage from API message
    */
   const parseProgressFromMessage = useCallback((message) => {
-    let percentage = 15;
-    let stage = 'foundation';
+    const lowerMessage = message.toLowerCase();
 
-    if (message.includes('diagnostic') || message.includes('40Q')) {
-      percentage = 25;
-      stage = 'foundation';
-    } else if (message.includes('maturity') || message.includes('market')) {
-      percentage = 35;
-      stage = 'deep-dive';
-    } else if (message.includes('legitimacy') || message.includes('needs')) {
-      percentage = 45;
-      stage = 'deep-dive';
-    } else if (message.includes('persona') || message.includes('ecosystem')) {
-      percentage = 55;
-      stage = 'deep-dive';
-    } else if (message.includes('synthesis') || message.includes('diagnostic comment')) {
-      percentage = 70;
-      stage = 'synthesis';
-    } else if (message.includes('features') || message.includes('matrix')) {
-      percentage = 80;
-      stage = 'synthesis';
-    } else if (message.includes('viability') || message.includes('gate')) {
-      percentage = 85;
-      stage = 'viability';
+    for (const matcher of PROGRESS_MATCHERS) {
+      if (matcher.keywords.some(kw => lowerMessage.includes(kw.toLowerCase()))) {
+        return { percentage: matcher.percentage, stage: matcher.stage };
+      }
     }
 
-    return { percentage, stage };
+    // Default values if no match found
+    return { percentage: 15, stage: 'foundation' };
   }, []);
 
   /**
@@ -175,7 +173,12 @@ export function useExpressAssessment({ projectName, inputContent, callClaudeAPI,
         assessmentData = parseLLMJson(responseText);
       } catch (parseError) {
         console.error('JSON parse error:', parseError);
-        throw new Error('Failed to parse assessment data. The AI response was not in the expected JSON format.');
+        // Include response preview for debugging (first 200 chars)
+        const preview = responseText.substring(0, 200).replace(/\n/g, ' ');
+        throw new Error(
+          `Failed to parse assessment data. The AI response was not in the expected JSON format. ` +
+          `Response preview: "${preview}${responseText.length > 200 ? '...' : ''}"`
+        );
       }
 
       // Validate the assessment data
