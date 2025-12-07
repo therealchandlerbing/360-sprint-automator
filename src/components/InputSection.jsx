@@ -42,12 +42,11 @@ const InputSectionComponent = ({
   const [isDragging, setIsDragging] = useState(false);
   const [removeHoveredIndex, setRemoveHoveredIndex] = useState(null);
 
-  const handleFileChange = async (event) => {
-    const files = Array.from(event.target.files);
-    if (files.length === 0) return;
+  // Shared file processing logic (DRY principle)
+  const processUploadedFiles = async (files) => {
+    if (!files || files.length === 0) return;
 
     setIsParsingFiles(true);
-
     try {
       const { results, errors } = await parseFiles(files);
 
@@ -65,9 +64,14 @@ const InputSectionComponent = ({
       }
     } finally {
       setIsParsingFiles(false);
-      // Reset input to allow re-uploading same file
-      event.target.value = '';
     }
+  };
+
+  const handleFileChange = async (event) => {
+    const files = Array.from(event.target.files);
+    await processUploadedFiles(files);
+    // Reset input to allow re-uploading same file
+    event.target.value = '';
   };
 
   // Drag event handlers
@@ -80,7 +84,10 @@ const InputSectionComponent = ({
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(false);
+    // Only clear dragging state if leaving the drop zone entirely
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setIsDragging(false);
+    }
   };
 
   const handleDragOver = (e) => {
@@ -96,28 +103,7 @@ const InputSectionComponent = ({
     if (isParsingFiles) return;
 
     const files = Array.from(e.dataTransfer.files);
-    if (files.length === 0) return;
-
-    setIsParsingFiles(true);
-
-    try {
-      const { results, errors } = await parseFiles(files);
-
-      if (errors.length > 0 && onError) {
-        const errorMessages = errors.map(e => `${e.file}: ${e.error}`).join('\n');
-        onError(`Some files could not be parsed:\n${errorMessages}`);
-      }
-
-      if (results.length > 0) {
-        onFileUpload(results);
-      }
-    } catch (error) {
-      if (onError) {
-        onError(`Failed to parse files: ${error.message}`);
-      }
-    } finally {
-      setIsParsingFiles(false);
-    }
+    await processUploadedFiles(files);
   };
 
   // Enhanced upload zone styles

@@ -4,10 +4,15 @@
 // Enhanced with step tooltips and session controls
 // ============================================
 
-import React, { useRef, useState, memo } from 'react';
+import React, { useRef, useState, useCallback, memo } from 'react';
 import { COLORS } from '../constants/colors.js';
 import { STEPS, PHASES } from '../constants/steps.js';
 import { styles } from '../styles/appStyles.js';
+
+// Time constants for formatRelativeTime
+const ONE_MINUTE_MS = 60 * 1000;
+const ONE_HOUR_MS = 60 * ONE_MINUTE_MS;
+const ONE_DAY_MS = 24 * ONE_HOUR_MS;
 
 // Estimated time for each step
 const STEP_TIMES = {
@@ -44,14 +49,33 @@ const darkenColor = (hex, percent) => {
   return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
 };
 
-// Format relative time helper
+// Pre-compute phase badge styles (moved outside component for performance)
+const PHASE_BADGE_STYLES = Object.entries(COLORS.phases).reduce((acc, [phase, colors]) => {
+  acc[phase] = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 14px',
+    borderRadius: '20px',
+    fontSize: '10px',
+    fontWeight: '600',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    background: `linear-gradient(135deg, ${colors.bg} 0%, ${darkenColor(colors.bg, 15)} 100%)`,
+    color: colors.text,
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+  };
+  return acc;
+}, {});
+
+// Format relative time helper with named constants
 const formatRelativeTime = (timestamp) => {
   if (!timestamp) return '';
   const diff = Date.now() - timestamp;
-  if (diff < 60000) return 'just now';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
-  return `${Math.floor(diff / 86400000)} days ago`;
+  if (diff < ONE_MINUTE_MS) return 'just now';
+  if (diff < ONE_HOUR_MS) return `${Math.floor(diff / ONE_MINUTE_MS)} min ago`;
+  if (diff < ONE_DAY_MS) return `${Math.floor(diff / ONE_HOUR_MS)} hours ago`;
+  return `${Math.floor(diff / ONE_DAY_MS)} days ago`;
 };
 
 // Step tooltip styles
@@ -230,8 +254,8 @@ const SidebarComponent = ({
   const [importHovered, setImportHovered] = useState(false);
   const [clearHovered, setClearHovered] = useState(false);
 
-  // Track step completion times (in-memory only)
-  const [stepCompletionTimes] = useState(() => {
+  // Track step completion times (updates when new steps are completed)
+  const [stepCompletionTimes, setStepCompletionTimes] = useState(() => {
     // Initialize with current time for already completed steps
     const times = {};
     Object.keys(stepOutputs).forEach(id => {
@@ -239,6 +263,21 @@ const SidebarComponent = ({
     });
     return times;
   });
+
+  // Update completion times when new steps are completed
+  React.useEffect(() => {
+    const newTimes = { ...stepCompletionTimes };
+    let hasNewCompletions = false;
+    Object.keys(stepOutputs).forEach(id => {
+      if (!newTimes[id]) {
+        newTimes[id] = Date.now();
+        hasNewCompletions = true;
+      }
+    });
+    if (hasNewCompletions) {
+      setStepCompletionTimes(newTimes);
+    }
+  }, [stepOutputs, stepCompletionTimes]);
 
   // Auto-save indicator state
   const [isSaving, setIsSaving] = useState(false);
@@ -286,24 +325,9 @@ const SidebarComponent = ({
 
   const hasContent = completedSteps > 0 || hasInput;
 
-  // Get phase badge style with gradient
-  const getPhaseBadgeStyle = (phase) => {
-    const colors = COLORS.phases[phase];
-    return {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '6px',
-      padding: '6px 14px',
-      borderRadius: '20px',
-      fontSize: '10px',
-      fontWeight: '600',
-      letterSpacing: '0.05em',
-      textTransform: 'uppercase',
-      background: `linear-gradient(135deg, ${colors.bg} 0%, ${darkenColor(colors.bg, 15)} 100%)`,
-      color: colors.text,
-      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-    };
-  };
+  // Handler to show tooltip on hover/focus
+  const showTooltip = useCallback((stepId) => setHoveredStepId(stepId), []);
+  const hideTooltip = useCallback(() => setHoveredStepId(null), []);
 
   return (
     <aside
@@ -319,7 +343,7 @@ const SidebarComponent = ({
         <div style={styles.stepsContainer} role="list">
           {PHASES.map(phase => (
             <div key={phase} style={styles.phaseGroup} role="group" aria-label={`${phase} phase`}>
-              <div style={getPhaseBadgeStyle(phase)}>
+              <div style={PHASE_BADGE_STYLES[phase]}>
                 <span style={{ fontSize: '9px', opacity: 0.8 }}>{PHASE_ICONS[phase]}</span>
                 <span>{phase}</span>
               </div>
@@ -331,14 +355,16 @@ const SidebarComponent = ({
                   <div
                     key={step.id}
                     style={{ position: 'relative' }}
-                    onMouseEnter={() => setHoveredStepId(step.id)}
-                    onMouseLeave={() => setHoveredStepId(null)}
+                    onMouseEnter={() => showTooltip(step.id)}
+                    onMouseLeave={hideTooltip}
                   >
                     <button
                       onClick={() => onStepSelect(step.id)}
+                      onFocus={() => showTooltip(step.id)}
+                      onBlur={hideTooltip}
                       role="listitem"
                       aria-current={isActive ? 'step' : undefined}
-                      aria-label={`Step ${step.id}: ${step.name}${isComplete ? ' (completed)' : ''}`}
+                      aria-label={`Step ${step.id}: ${step.name}${isComplete ? ' (completed)' : ''}. Estimated time: ${STEP_TIMES[step.id] || '~15 min'}`}
                       style={{
                         ...styles.stepButton,
                         ...(isActive ? {

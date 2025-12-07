@@ -4,9 +4,12 @@
 // Enhanced with expand/collapse and styled container
 // ============================================
 
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { COLORS } from '../constants/colors.js';
 import { styles } from '../styles/appStyles.js';
+
+// Threshold for collapsible output (in characters)
+const LONG_OUTPUT_THRESHOLD = 1500;
 
 // Output display styles
 const outputStyles = {
@@ -120,9 +123,14 @@ const OutputDisplayComponent = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Reset expanded state when output or step changes
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [output, currentStep]);
+
   if (!output) return null;
 
-  const isLong = output.length > 1500;
+  const isLong = output.length > LONG_OUTPUT_THRESHOLD;
   const isCopied = copyFeedback === currentStep;
 
   return (
