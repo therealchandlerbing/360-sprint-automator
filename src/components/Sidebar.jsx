@@ -16,7 +16,7 @@ const SidebarComponent = ({
   currentStep,
   stepOutputs,
   completedSteps,
-  inputContent,
+  hasInput,
   isMobileMenuOpen,
   onStepSelect,
   onDownloadAllAsZip,
@@ -40,7 +40,7 @@ const SidebarComponent = ({
     event.target.value = '';
   };
 
-  const hasContent = completedSteps > 0 || inputContent.trim();
+  const hasContent = completedSteps > 0 || hasInput;
 
   return (
     <aside
