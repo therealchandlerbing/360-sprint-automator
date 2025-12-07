@@ -11,7 +11,13 @@ const CONFIG = {
   baseDelay: 2000, // 2 seconds for standard errors
   timeoutBaseDelay: 8000, // 8 seconds for 504 timeout errors
   rateLimitBaseDelay: 15000, // 15 seconds for rate limit errors (429) - aggressive backoff
-  clientTimeout: 300000, // 5 minutes client-side timeout (matches Vercel maxDuration)
+  clientTimeout: 280000, // 4m 40s - longer than server timeout (270s) to receive 504s
+};
+
+// Delay multipliers by HTTP status code
+const DELAY_BY_STATUS = {
+  504: 'timeoutBaseDelay',
+  429: 'rateLimitBaseDelay',
 };
 
 /**
@@ -38,7 +44,7 @@ const isNetworkError = (err) => {
     'aborted',
   ];
 
-  const errorMessage = (err.message || '').toLowerCase();
+  const errorMessage = (err?.message || '').toLowerCase();
   return networkErrorPatterns.some(pattern => errorMessage.includes(pattern));
 };
 
@@ -89,16 +95,10 @@ export const useClaudeAPI = () => {
 
           // Retry on rate limit (429) or server errors (5xx)
           if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) {
-            // Use appropriate delay based on error type
-            let delay;
-            if (response.status === 504) {
-              delay = timeoutBaseDelay * Math.pow(2, attempt);
-            } else if (response.status === 429) {
-              delay = rateLimitBaseDelay * Math.pow(2, attempt);
-            } else {
-              delay = baseDelay * Math.pow(2, attempt);
-            }
-
+            // Use appropriate delay based on error type (lookup or default to baseDelay)
+            const delayKey = DELAY_BY_STATUS[response.status];
+            const delayBase = delayKey ? CONFIG[delayKey] : baseDelay;
+            const delay = delayBase * Math.pow(2, attempt);
             const retryNum = attempt + 1;
             addLog?.(`${errorMessage} (${requestDuration}s) - retry ${retryNum}/${maxRetries} after ${delay/1000}s...`);
             await new Promise(resolve => setTimeout(resolve, delay));
