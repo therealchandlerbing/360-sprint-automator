@@ -24,12 +24,6 @@ export const useClaudeAPI = () => {
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        if (attempt > 0) {
-          const delay = baseDelay * Math.pow(2, attempt - 1);
-          addLog?.(`Retry attempt ${attempt}/${maxRetries} after ${delay/1000}s delay...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-
         const response = await fetch("/api/claude", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -45,14 +39,12 @@ export const useClaudeAPI = () => {
 
           // Retry on rate limit (429) or server errors (5xx)
           if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) {
-            // Use longer delay for timeout errors (504)
-            if (response.status === 504) {
-              const timeoutDelay = timeoutBaseDelay * Math.pow(2, attempt);
-              addLog?.(`${errorMessage} - will retry after ${timeoutDelay/1000}s...`);
-              await new Promise(resolve => setTimeout(resolve, timeoutDelay));
-            } else {
-              addLog?.(`${errorMessage} - will retry...`);
-            }
+            // Use longer delay for timeout errors (504), standard delay for others
+            const delay = response.status === 504
+              ? timeoutBaseDelay * Math.pow(2, attempt)
+              : baseDelay * Math.pow(2, attempt);
+            addLog?.(`${errorMessage} - will retry after ${delay/1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
 
@@ -64,9 +56,11 @@ export const useClaudeAPI = () => {
         if (attempt === maxRetries) {
           throw err;
         }
-        // Network errors - retry
+        // Network errors - retry with standard delay
         if (err.name === 'TypeError' || err.message.includes('fetch')) {
-          addLog?.(`Network error - will retry...`);
+          const delay = baseDelay * Math.pow(2, attempt);
+          addLog?.(`Network error - will retry after ${delay/1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
         throw err;
