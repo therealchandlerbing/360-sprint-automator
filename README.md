@@ -66,7 +66,7 @@ Each dimension is scored on a 1-5 scale with specific thresholds that must be me
 │ Dimension       │ Weight │ Threshold │ Key Question                │
 ├─────────────────┼────────┼───────────┼─────────────────────────────┤
 │ Legitimacy      │  15%   │   ≥3.0    │ Is the problem real?        │
-│ Desirability    │  25%   │   ≥3.5    │ Do people want YOUR fix?    │
+│ Desirability    │  25%   │   ≥3.5    │ Do people want YOUR solution? │
 │ Acceptability   │  20%   │   ≥3.0    │ Will the ecosystem help?    │
 │ Feasibility     │  20%   │   ≥3.0    │ Can you actually deliver?   │
 │ Viability       │  20%   │   ≥3.0    │ Is the model sustainable?   │
