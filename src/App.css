@@ -10,6 +10,8 @@
   --color-primary-accent: #00A3B5;
   --color-background: #F7FAFC;
   --color-white: #FFFFFF;
+  --color-disabled-bg: #E2E8F0;
+  --color-disabled-text: #718096;
 }
 
 /* Main Layout Classes */
@@ -32,6 +34,41 @@
   min-width: 0;
 }
 
+/* Button Base Styles */
+.process-button {
+  width: 100%;
+  padding: 18px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(10, 37, 64, 0.2);
+}
+
+.process-button:disabled {
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.process-button .spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--color-white);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
 /* Button Variants */
 .btn-express {
   background-color: var(--color-primary-accent);
@@ -39,8 +76,8 @@
 }
 
 .btn-express:disabled {
-  background-color: #E2E8F0;
-  color: #718096;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
   cursor: not-allowed;
   box-shadow: none;
 }

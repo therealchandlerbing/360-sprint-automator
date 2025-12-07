@@ -512,21 +512,17 @@ export default function VianeoSprintAutomator() {
               {/* Process Button - Different based on mode */}
               {assessmentMode === 'express' && currentStep === 0 && inputContent.trim() && projectName ? (
                 <button
-                  className="btn-express"
-                  style={{
-                    ...styles.processButton,
-                    ...(isProcessing ? styles.processButtonDisabled : {}),
-                  }}
+                  className="process-button btn-express"
                   disabled={isProcessing}
                   onClick={processExpressAssessment}
                 >
                   {isProcessing ? (
                     <>
-                      <span style={styles.spinner} />
+                      <span className="spinner" />
                       Generating...
                     </>
                   ) : (
-                    <>Generate 360 Business Validation Report</>
+                    'Generate 360 Business Validation Report'
                   )}
                 </button>
               ) : (
