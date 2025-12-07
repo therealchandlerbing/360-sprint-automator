@@ -390,8 +390,8 @@ Examples:
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     Anthropic Claude API                            │
 ├─────────────────────────────────────────────────────────────────────┤
-│  Model: claude-sonnet-4-5-20250929 (default)                          │
-│  Max Tokens: 8000 (configurable)                                    │
+│  Model: Configurable via CLAUDE_MODEL (see config table)            │
+│  Max Tokens: 16000 (configurable)                                   │
 │  Timeout: 60 seconds                                                │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -478,7 +478,7 @@ Examples:
 |----------|:--------:|---------|-------------|
 | `ANTHROPIC_API_KEY` | Yes | - | Your Anthropic API key |
 | `CLAUDE_MODEL` | No | `claude-sonnet-4-5-20250929` | Claude model ID |
-| `CLAUDE_MAX_TOKENS` | No | `8000` | Maximum response tokens |
+| `CLAUDE_MAX_TOKENS` | No | `16000` | Maximum response tokens |
 
 ### Local Development
 
