@@ -18,6 +18,7 @@ import {
   ImageRun,
   convertInchesToTwip,
 } from 'docx';
+import { formatDateForFilename, sanitizeProjectName } from './utils/formatUtils.js';
 
 import {
   REPORT_COLORS,
@@ -631,31 +632,6 @@ export function createChartImage(base64Data, width, height, altText = 'Chart') {
 function generateSequenceNumber() {
   const timestamp = Date.now();
   return String(timestamp % 10000).padStart(4, '0');
-}
-
-/**
- * Format date as dd.mm.yy
- * @param {string|Date} date - Date to format
- * @returns {string} Formatted date string
- */
-function formatDateForFilename(date) {
-  const d = date ? new Date(date) : new Date();
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}.${month}.${year}`;
-}
-
-/**
- * Sanitize project name for use in filename
- * @param {string} projectName - Project name to sanitize
- * @returns {string} Sanitized name
- */
-function sanitizeProjectName(projectName) {
-  return (projectName || 'Assessment')
-    .replace(/[^a-zA-Z0-9\s-]/g, '')
-    .replace(/\s+/g, '_')
-    .substring(0, 50);
 }
 
 /**

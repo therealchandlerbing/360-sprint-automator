@@ -21,6 +21,7 @@ import {
   Footer,
   PageNumber,
 } from 'docx';
+import { formatDateForFilename, sanitizeProjectName } from './formatUtils.js';
 
 // Design constants matching VIANEO brand
 const COLORS = {
@@ -1018,19 +1019,6 @@ export function downloadDOCX(blob, filename) {
 }
 
 /**
- * Format date as dd.mm.yy
- * @param {string|Date} date - Date to format
- * @returns {string} Formatted date string
- */
-function formatDateForFilename(date) {
-  const d = date ? new Date(date) : new Date();
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}.${month}.${year}`;
-}
-
-/**
  * Generate safe filename from project name
  * Format: [ProjectName]_Report_[dd.mm.yy].docx
  * @param {string} projectName - Project name
@@ -1038,10 +1026,7 @@ function formatDateForFilename(date) {
  * @returns {string} - Safe filename
  */
 export function generateFilename(projectName, date) {
-  const safeName = (projectName || 'Assessment')
-    .replace(/[^a-zA-Z0-9\s-]/g, '')
-    .replace(/\s+/g, '_')
-    .substring(0, 50);
+  const safeName = sanitizeProjectName(projectName);
   const dateStr = formatDateForFilename(date);
   return `${safeName}_Report_${dateStr}.docx`;
 }
