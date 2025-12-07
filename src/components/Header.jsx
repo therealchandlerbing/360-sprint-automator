@@ -14,6 +14,7 @@ import { styles } from '../styles/appStyles.js';
 const HeaderComponent = ({
   completedSteps,
   onOpenMethodology,
+  onToggleMobileMenu,
 }) => {
   const [isWaffleMenuOpen, setIsWaffleMenuOpen] = useState(false);
   const waffleMenuRef = useRef(null);
@@ -38,6 +39,12 @@ const HeaderComponent = ({
     setIsWaffleMenuOpen(false);
     onOpenMethodology();
   };
+
+  const handleNavigationClick = () => {
+    setIsWaffleMenuOpen(false);
+    onToggleMobileMenu();
+  };
+
   const progressPercent = Math.round((completedSteps / STEPS.length) * 100);
 
   return (
@@ -64,6 +71,14 @@ const HeaderComponent = ({
                 role="menu"
                 aria-label="Application menu"
               >
+                <button
+                  className="waffle-dropdown-item mobile-only"
+                  onClick={handleNavigationClick}
+                  role="menuitem"
+                >
+                  <span className="waffle-dropdown-icon" aria-hidden="true">☰</span>
+                  <span>Navigation</span>
+                </button>
                 <button
                   className="waffle-dropdown-item"
                   onClick={handleMethodologyClick}

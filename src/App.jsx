@@ -407,6 +407,7 @@ export default function VianeoSprintAutomator() {
         <Header
           completedSteps={completedSteps}
           onOpenMethodology={() => setShowMethodologyModal(true)}
+          onToggleMobileMenu={toggleMobileMenu}
         />
 
         {/* Methodology Modal */}
