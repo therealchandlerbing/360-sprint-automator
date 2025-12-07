@@ -121,8 +121,7 @@ export const styles = {
   stepsContainer: {
     padding: '12px',
     maxHeight: 'calc(100vh - 280px)',
-    overflowY: 'auto',
-    overflowX: 'hidden',
+    overflow: 'hidden auto',
   },
   phaseGroup: {
     marginBottom: '16px',
