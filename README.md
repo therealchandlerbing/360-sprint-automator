@@ -390,7 +390,7 @@ Examples:
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     Anthropic Claude API                            │
 ├─────────────────────────────────────────────────────────────────────┤
-│  Model: claude-sonnet-4-5-20250929 (default)                        │
+│  Model: Configurable via CLAUDE_MODEL (see config table)            │
 │  Max Tokens: 16000 (configurable)                                   │
 │  Timeout: 60 seconds                                                │
 └─────────────────────────────────────────────────────────────────────┘
