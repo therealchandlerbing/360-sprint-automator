@@ -37,27 +37,40 @@
 /* Button Base Styles */
 .process-button {
   width: 100%;
-  padding: 18px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-white);
-  background-color: var(--color-primary);
+  padding: 16px 32px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #FFFFFF;
+  background: linear-gradient(to bottom, #475569, #334155);
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s ease-out;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  box-shadow: 0 4px 12px rgba(10, 37, 64, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.process-button:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #64748B, #475569);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.process-button:active:not(:disabled) {
+  background: linear-gradient(to bottom, #334155, #1E293B);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  transform: translateY(0);
 }
 
 .process-button:disabled {
-  background-color: var(--color-disabled-bg);
-  color: var(--color-disabled-text);
+  background: #E2E8F0;
+  color: #A0AEC0;
   cursor: not-allowed;
   box-shadow: none;
+  transform: none;
 }
 
 .process-button .spinner {
@@ -92,12 +105,43 @@
 /* Form Element Focus States */
 input:focus,
 textarea:focus {
-  border-color: #00A3B5 !important;
+  outline: none;
+  border-color: #0D9488 !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15) !important;
+}
+
+input:hover,
+textarea:hover {
+  border-color: #CBD5E0;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #A0AEC0;
 }
 
 /* Button Hover Effect */
 button:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+/* Focus visible for accessibility */
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 163, 181, 0.4);
+}
+
+/* File upload zone hover */
+.upload-zone:hover {
+  border-color: #14B8A6 !important;
+  background: rgba(20, 184, 166, 0.05) !important;
+}
+
+/* Navigation secondary button hover */
+.nav-buttons button:first-child:hover:not(:disabled) {
+  border-color: #CBD5E0;
+  background-color: #F7FAFC;
+  color: #1A202C;
 }
 
 /* Base styles for responsive elements (hidden on desktop) */

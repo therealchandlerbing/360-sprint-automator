@@ -62,6 +62,7 @@ const SidebarComponent = ({
               {STEPS.filter(s => s.phase === phase).map(step => {
                 const isActive = currentStep === step.id;
                 const isComplete = stepOutputs[step.id] !== undefined;
+                const phaseColors = COLORS.phases[phase];
                 return (
                   <button
                     key={step.id}
@@ -71,21 +72,45 @@ const SidebarComponent = ({
                     aria-label={`Step ${step.id}: ${step.name}${isComplete ? ' (completed)' : ''}`}
                     style={{
                       ...styles.stepButton,
-                      ...(isActive ? { backgroundColor: COLORS.phases[phase].light } : {}),
-                      ...(isComplete && !isActive ? styles.stepButtonComplete : {}),
+                      ...(isActive ? {
+                        backgroundColor: phaseColors.light,
+                        borderLeft: `3px solid ${phaseColors.bg}`,
+                        marginLeft: '-3px',
+                        paddingLeft: 'calc(12px - 3px)',
+                      } : {}),
                     }}
                   >
                     <span
                       style={{
                         ...styles.stepNumber,
-                        backgroundColor: isComplete ? COLORS.success : isActive ? COLORS.phases[phase].bg : COLORS.border,
-                        color: isComplete || isActive ? COLORS.white : COLORS.textSecondary,
+                        backgroundColor: isComplete
+                          ? '#10B981'
+                          : isActive
+                            ? phaseColors.bg
+                            : 'transparent',
+                        border: isComplete || isActive
+                          ? 'none'
+                          : '2px solid #E2E8F0',
+                        color: isComplete || isActive
+                          ? '#FFFFFF'
+                          : '#A0AEC0',
+                        boxShadow: isComplete
+                          ? '0 1px 3px rgba(16, 185, 129, 0.3)'
+                          : isActive
+                            ? `0 0 0 3px ${phaseColors.light}`
+                            : 'none',
                       }}
                       aria-hidden="true"
                     >
                       {isComplete ? '✓' : step.id}
                     </span>
-                    <span style={styles.stepName}>{step.name}</span>
+                    <span style={{
+                      ...styles.stepName,
+                      fontWeight: isActive ? '600' : '400',
+                      color: isActive ? '#1A202C' : '#4A5568',
+                    }}>
+                      {step.name}
+                    </span>
                   </button>
                 );
               })}
