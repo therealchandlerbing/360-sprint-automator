@@ -12,6 +12,9 @@
   --color-white: #FFFFFF;
   --color-disabled-bg: #E2E8F0;
   --color-disabled-text: #718096;
+  --color-focus-ring: #0D9488;
+  --color-text-muted: #A0AEC0;
+  --color-border-hover: #CBD5E0;
 }
 
 /* Main Layout Classes */
@@ -37,27 +40,40 @@
 /* Button Base Styles */
 .process-button {
   width: 100%;
-  padding: 18px 24px;
-  font-size: 16px;
-  font-weight: 600;
+  padding: 16px 32px;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--color-white);
-  background-color: var(--color-primary);
+  background: linear-gradient(to bottom, #475569, #334155);
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s ease-out;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  box-shadow: 0 4px 12px rgba(10, 37, 64, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.process-button:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #64748B, #475569);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.process-button:active:not(:disabled) {
+  background: linear-gradient(to bottom, #334155, #1E293B);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  transform: translateY(0);
 }
 
 .process-button:disabled {
-  background-color: var(--color-disabled-bg);
-  color: var(--color-disabled-text);
+  background: var(--color-disabled-bg);
+  color: var(--color-text-muted);
   cursor: not-allowed;
   box-shadow: none;
+  transform: none;
 }
 
 .process-button .spinner {
@@ -89,15 +105,49 @@
   }
 }
 
-/* Form Element Focus States */
+/*
+ * Form Element Focus States
+ * Note: !important is used to override inline styles from React components
+ */
 input:focus,
 textarea:focus {
-  border-color: #00A3B5 !important;
+  outline: none;
+  border-color: var(--color-focus-ring) !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15) !important;
+}
+
+input:hover,
+textarea:hover {
+  border-color: var(--color-border-hover);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
 }
 
 /* Button Hover Effect */
 button:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+/* Focus visible for accessibility */
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 163, 181, 0.4);
+}
+
+/* File upload zone hover */
+.upload-zone:hover {
+  border-color: var(--color-focus-ring) !important;
+  background: rgba(20, 184, 166, 0.05) !important;
+}
+
+/* Navigation secondary button hover */
+.nav-buttons button:first-child:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+  background-color: var(--color-background);
+  color: #1A202C;
 }
 
 /* Waffle Menu - Always visible */
@@ -155,7 +205,13 @@ button:hover:not(:disabled) {
   color: var(--color-primary-accent);
 }
 
-/* Base styles for responsive elements (hidden on desktop) */
+/*
+ * Base styles for responsive elements (hidden on desktop)
+ * Note: !important declarations in media queries below are necessary
+ * to override inline styles applied by React components via the style prop.
+ * This is the standard pattern for responsive overrides when components
+ * use JavaScript-generated inline styles.
+ */
 .mobile-menu-btn {
   display: none;
 }

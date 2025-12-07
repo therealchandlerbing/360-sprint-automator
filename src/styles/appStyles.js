@@ -70,17 +70,17 @@ export const styles = {
   },
   progressBar: {
     width: '200px',
-    height: '8px',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: '4px',
+    height: '6px',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: '3px',
     overflow: 'hidden',
     marginTop: '8px',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: COLORS.primaryAccent,
-    borderRadius: '4px',
-    transition: 'width 0.4s ease',
+    background: 'linear-gradient(to right, #14B8A6, #0D9488)',
+    borderRadius: '3px',
+    transition: 'width 0.5s ease-out',
   },
 
   // Main Layout
@@ -99,8 +99,9 @@ export const styles = {
   },
   sidebarCard: {
     backgroundColor: COLORS.white,
-    borderRadius: '16px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)',
+    borderRadius: '12px',
+    border: '1px solid #EDF2F7',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     overflow: 'hidden',
     position: 'sticky',
     top: '24px',
@@ -156,15 +157,18 @@ export const styles = {
     backgroundColor: COLORS.successLight,
   },
   stepNumber: {
-    width: '28px',
-    height: '28px',
+    width: '24px',
+    height: '24px',
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '12px',
+    fontSize: '11px',
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
+    fontVariantNumeric: 'tabular-nums',
     fontWeight: '600',
     flexShrink: 0,
+    transition: 'all 0.15s ease',
   },
   stepName: {
     fontSize: '14px',
@@ -207,28 +211,34 @@ export const styles = {
     borderRadius: '6px',
   },
   stepIndicator: {
-    fontSize: '14px',
-    color: COLORS.textMuted,
+    fontSize: '12px',
+    fontWeight: '400',
+    color: '#A0AEC0',
+    marginLeft: '12px',
   },
   stepTitle: {
     margin: '0 0 8px',
-    fontSize: '28px',
+    fontSize: '32px',
     fontWeight: '600',
-    color: COLORS.textPrimary,
     letterSpacing: '-0.02em',
+    lineHeight: '1.2',
+    color: '#1A202C',
   },
   stepDescription: {
     margin: 0,
     fontSize: '16px',
-    color: COLORS.textSecondary,
-    lineHeight: 1.5,
+    fontWeight: '400',
+    lineHeight: '1.5',
+    color: '#4A5568',
+    marginBottom: '32px',
   },
 
   // Cards
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: '16px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)',
+    borderRadius: '12px',
+    border: '1px solid #EDF2F7',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
     marginBottom: '24px',
     overflow: 'hidden',
   },
@@ -252,23 +262,27 @@ export const styles = {
     width: '100%',
     padding: '12px 16px',
     fontSize: '15px',
-    border: `2px solid ${COLORS.border}`,
-    borderRadius: '10px',
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '8px',
+    backgroundColor: '#FFFFFF',
+    color: '#1A202C',
     outline: 'none',
-    transition: 'border-color 0.15s ease',
+    transition: 'all 0.15s ease',
     boxSizing: 'border-box',
   },
   textarea: {
     width: '100%',
-    padding: '16px',
-    fontSize: '14px',
-    fontFamily: '"SF Mono", "Menlo", "Monaco", monospace',
-    border: `2px solid ${COLORS.border}`,
-    borderRadius: '10px',
+    padding: '12px 16px',
+    fontSize: '15px',
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '8px',
+    backgroundColor: '#FFFFFF',
+    color: '#1A202C',
     outline: 'none',
     resize: 'vertical',
-    minHeight: '200px',
+    minHeight: '160px',
     lineHeight: 1.6,
+    transition: 'all 0.15s ease',
     boxSizing: 'border-box',
   },
   uploadZone: {
@@ -278,7 +292,7 @@ export const styles = {
     textAlign: 'center',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FAFAFA',
   },
   uploadIcon: {
     fontSize: '48px',
@@ -316,7 +330,7 @@ export const styles = {
   removeButton: {
     width: '24px',
     height: '24px',
-    backgroundColor: '#FEE2E2',
+    backgroundColor: COLORS.errorLightAlt,
     color: COLORS.error,
     border: 'none',
     borderRadius: '50%',
@@ -335,7 +349,7 @@ export const styles = {
   branchButton: {
     padding: '24px',
     backgroundColor: COLORS.background,
-    border: `2px solid ${COLORS.border}`,
+    border: `1px solid ${COLORS.border}`,
     borderRadius: '12px',
     cursor: 'pointer',
     textAlign: 'center',
@@ -356,38 +370,7 @@ export const styles = {
     color: COLORS.textMuted,
   },
 
-  // Buttons
-  processButton: {
-    width: '100%',
-    padding: '18px 24px',
-    fontSize: '16px',
-    fontWeight: '600',
-    color: COLORS.white,
-    backgroundColor: COLORS.primary,
-    border: 'none',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '12px',
-    boxShadow: '0 4px 12px rgba(10, 37, 64, 0.2)',
-  },
-  processButtonDisabled: {
-    backgroundColor: COLORS.border,
-    color: COLORS.textMuted,
-    cursor: 'not-allowed',
-    boxShadow: 'none',
-  },
-  spinner: {
-    width: '20px',
-    height: '20px',
-    border: '3px solid rgba(255,255,255,0.3)',
-    borderTopColor: COLORS.white,
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-  },
+  // Note: processButton styles are now in App.css (.process-button class)
 
   // Output
   outputHeader: {
@@ -426,24 +409,24 @@ export const styles = {
   logContainer: {
     marginTop: '16px',
     padding: '16px',
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.logBackground,
     borderRadius: '10px',
     fontFamily: '"SF Mono", "Menlo", "Monaco", monospace',
     fontSize: '13px',
   },
   logEntry: {
-    color: '#94A3B8',
+    color: COLORS.logText,
     marginBottom: '4px',
   },
   logTime: {
-    color: '#64748B',
+    color: COLORS.logTimestamp,
   },
 
   // Error
   errorBox: {
     padding: '16px 20px',
-    backgroundColor: '#FEF2F2',
-    border: `1px solid #FECACA`,
+    backgroundColor: COLORS.errorLight,
+    border: `1px solid ${COLORS.errorBorder}`,
     borderRadius: '10px',
     marginBottom: '24px',
     display: 'flex',
@@ -462,17 +445,17 @@ export const styles = {
     borderTop: `1px solid ${COLORS.border}`,
   },
   navButton: {
-    padding: '14px 24px',
-    fontSize: '15px',
-    fontWeight: '600',
-    borderRadius: '10px',
+    padding: '12px 24px',
+    fontSize: '14px',
+    fontWeight: '500',
+    borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
   },
   navButtonSecondary: {
     backgroundColor: COLORS.white,
-    color: COLORS.textPrimary,
-    border: `2px solid ${COLORS.border}`,
+    color: '#4A5568',
+    border: `1px solid ${COLORS.border}`,
   },
   navButtonPrimary: {
     backgroundColor: COLORS.primary,
@@ -542,9 +525,9 @@ export const styles = {
     padding: '12px 10px',
     fontSize: '13px',
     fontWeight: '600',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: COLORS.errorLight,
     color: COLORS.error,
-    border: '1px solid #FECACA',
+    border: `1px solid ${COLORS.errorBorder}`,
     borderRadius: '8px',
     cursor: 'pointer',
   },
@@ -736,7 +719,7 @@ export const styles = {
     marginTop: '16px',
   },
   modalCalloutEmphasis: {
-    backgroundColor: '#FEF3CD',
+    backgroundColor: COLORS.warningLight,
     padding: '16px 20px',
     borderRadius: '8px',
     fontSize: '14px',
@@ -965,7 +948,7 @@ export const responsiveStyles = `
   }
   .methodology-trigger:hover {
     background-color: rgba(255,255,255,0.2);
-    color: #FFFFFF;
+    color: ${COLORS.white};
   }
   .methodology-trigger-icon {
     font-size: 16px;

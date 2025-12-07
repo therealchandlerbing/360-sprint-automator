@@ -100,7 +100,7 @@ const HeaderComponent = ({
           {/* Progress Section */}
           <div className="progress-section" style={styles.progressSection} role="status" aria-live="polite">
             <div style={styles.progressLabel}>Sprint Progress</div>
-            <div style={styles.progressValue}>{completedSteps} of {STEPS.length} steps</div>
+            <div style={styles.progressValue}>{completedSteps} of {STEPS.length} completed</div>
             <div
               style={styles.progressBar}
               role="progressbar"

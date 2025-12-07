@@ -27,6 +27,7 @@ export const COLORS = {
   textPrimary: '#1A202C',
   textSecondary: '#4A5568',
   textMuted: '#718096',
+  textExtraMuted: '#A0AEC0',
   textOnDark: '#FFFFFF',
   textOnDarkMuted: 'rgba(255,255,255,0.8)',
 
@@ -34,7 +35,16 @@ export const COLORS = {
   success: '#10B981',
   successLight: '#D1FAE5',
   warning: '#F59E0B',
+  warningLight: '#FEF3CD',
   error: '#EF4444',
+  errorLight: '#FEF2F2',
+  errorLightAlt: '#FEE2E2',
+  errorBorder: '#FECACA',
+
+  // Log/code block theme (slate gray)
+  logBackground: '#1E293B',
+  logText: '#94A3B8',
+  logTimestamp: '#64748B',
 
   // VIANEO Dimension Colors (for Methodology Modal)
   dimensions: {
