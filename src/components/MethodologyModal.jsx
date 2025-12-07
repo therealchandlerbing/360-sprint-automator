@@ -6,113 +6,12 @@
 import React, { useEffect, useRef, useCallback, memo } from 'react';
 import { COLORS } from '../constants/colors.js';
 import { styles } from '../styles/appStyles.js';
-
-// Dimension data
-const DIMENSIONS = [
-  {
-    id: 'legitimacy',
-    name: 'Legitimacy',
-    weight: 15,
-    threshold: 3.0,
-    question: 'Is there a real, validated problem worth solving?',
-    details: [
-      'Problem validation and evidence',
-      'Market need documentation',
-      'Pain point quantification',
-    ],
-  },
-  {
-    id: 'desirability',
-    name: 'Desirability',
-    weight: 25,
-    threshold: 3.5,
-    question: 'Do specific people want YOUR solution?',
-    details: [
-      'Requester identification (people, not organizations)',
-      'Needs validation with specific evidence',
-      'Willingness to pay or adopt',
-    ],
-    isEmphasis: true,
-  },
-  {
-    id: 'acceptability',
-    name: 'Acceptability',
-    weight: 20,
-    threshold: 3.0,
-    question: 'Will the ecosystem support you?',
-    details: [
-      'Ecosystem player mapping',
-      'Influencer and blocker identification',
-      'Regulatory and compliance landscape',
-    ],
-  },
-  {
-    id: 'feasibility',
-    name: 'Feasibility',
-    weight: 20,
-    threshold: 3.0,
-    question: 'Can you actually build and deliver it?',
-    details: [
-      'Technical capability assessment',
-      'Team composition and expertise',
-      'Development status and roadmap',
-    ],
-  },
-  {
-    id: 'viability',
-    name: 'Viability',
-    weight: 20,
-    threshold: 3.0,
-    question: 'Is the business model economically sustainable?',
-    details: [
-      'Business model clarity',
-      'Revenue model validation',
-      'Unit economics and sustainability',
-    ],
-  },
-];
-
-// Evidence markers with their colors
-const EVIDENCE_MARKERS = [
-  { tag: 'VALIDATED', desc: 'Direct evidence from primary sources', color: '#10B981', bg: '#D1FAE5' },
-  { tag: 'LIKELY', desc: 'Strong indirect evidence or logical inference', color: '#0D9488', bg: '#CCFBF1' },
-  { tag: 'ASSUMED', desc: 'Reasonable assumption without direct evidence', color: '#F59E0B', bg: '#FEF3C7' },
-  { tag: 'UNVALIDATED', desc: 'Claim made without supporting evidence', color: '#EF4444', bg: '#FEE2E2' },
-  { tag: 'DISPUTED', desc: 'Conflicting evidence or questionable claims', color: '#8B5CF6', bg: '#EDE9FE' },
-];
-
-// Process phases
-const PROCESS_PHASES = [
-  {
-    name: 'Foundation (Steps 0-3)',
-    items: [
-      'Extract and structure core business information',
-      'Initial scoring across all 5 VIANEO dimensions',
-    ],
-  },
-  {
-    name: 'Deep Dive (Steps 4-9)',
-    items: [
-      'Validate the problem (Legitimacy)',
-      'Map stakeholders and their needs (Desirability)',
-      'Assess ecosystem players (Acceptability)',
-    ],
-  },
-  {
-    name: 'Synthesis (Steps 10-11)',
-    items: [
-      'Connect findings into executive decision brief',
-      'Align features to validated needs',
-    ],
-  },
-  {
-    name: 'Final Assessment (Step 12)',
-    items: [
-      'Final viability scoring and gate recommendation',
-      'GO / CONDITIONAL / NO-GO decision',
-    ],
-  },
-];
+import {
+  DIMENSIONS,
+  EVIDENCE_MARKERS,
+  PROCESS_PHASES,
+  SCORING_REQUIREMENTS,
+} from '../constants/methodology.js';
 
 /**
  * DimensionCard - Renders a single dimension card
@@ -191,25 +90,26 @@ const MethodologyModalComponent = ({ isOpen, onClose }) => {
     }
   }, [onClose]);
 
-  // Manage focus and body scroll
+  // Manage focus and body scroll - improved cleanup handling
   useEffect(() => {
-    if (isOpen) {
-      previousActiveElement.current = document.activeElement;
-      document.body.style.overflow = 'hidden';
-      document.addEventListener('keydown', handleKeyDown);
-      // Focus close button after a brief delay for animation
-      setTimeout(() => {
-        closeButtonRef.current?.focus();
-      }, 50);
-    } else {
-      document.body.style.overflow = '';
-      document.removeEventListener('keydown', handleKeyDown);
-      previousActiveElement.current?.focus();
+    if (!isOpen) {
+      return;
     }
 
+    previousActiveElement.current = document.activeElement;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeyDown);
+
+    const timerId = setTimeout(() => {
+      closeButtonRef.current?.focus();
+    }, 50);
+
     return () => {
-      document.body.style.overflow = '';
+      clearTimeout(timerId);
       document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+      previousActiveElement.current?.focus();
     };
   }, [isOpen, handleKeyDown]);
 
@@ -217,19 +117,15 @@ const MethodologyModalComponent = ({ isOpen, onClose }) => {
 
   return (
     <div
-      style={{
-        ...styles.modalOverlay,
-        animation: 'fadeIn 0.2s ease-out',
-      }}
+      className="methodology-modal-overlay"
+      style={styles.modalOverlay}
       onClick={handleOverlayClick}
       role="presentation"
     >
       <div
         ref={modalRef}
-        style={{
-          ...styles.modalContainer,
-          animation: 'scaleIn 0.2s ease-out',
-        }}
+        className="methodology-modal-container"
+        style={styles.modalContainer}
         role="dialog"
         aria-modal="true"
         aria-labelledby="methodology-modal-title"
@@ -331,13 +227,7 @@ const MethodologyModalComponent = ({ isOpen, onClose }) => {
               <div style={{ fontSize: '14px', fontWeight: '600', color: COLORS.textPrimary, marginBottom: '12px' }}>
                 Scoring Requirements (1-5 scale):
               </div>
-              {[
-                { score: 5, desc: 'External validation, documented evidence, multiple sources' },
-                { score: 4, desc: 'Some external validation, clear capability demonstrated' },
-                { score: 3, desc: 'Internal validation only, reasonable assumptions' },
-                { score: 2, desc: 'Significant gaps, acknowledged but unaddressed' },
-                { score: 1, desc: 'Critical gap requiring immediate attention (RED FLAG)' },
-              ].map((item) => (
+              {SCORING_REQUIREMENTS.map((item) => (
                 <div key={item.score} style={styles.scoreItem}>
                   <span style={styles.scoreNumber}>{item.score}</span>
                   <span>{item.desc}</span>
@@ -407,24 +297,6 @@ const MethodologyModalComponent = ({ isOpen, onClose }) => {
           VIANEO Business Model methodology. Assessment automation by 360 Social Impact Studios.
         </div>
       </div>
-
-      {/* Animation styles injected via style tag */}
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
     </div>
   );
 };

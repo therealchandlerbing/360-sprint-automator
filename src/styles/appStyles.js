@@ -912,6 +912,28 @@ export const responsiveStyles = `
   input:focus, textarea:focus { border-color: ${COLORS.primaryAccent} !important; }
   button:hover:not(:disabled) { transform: translateY(-1px); }
 
+  /* Modal animations */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  .methodology-modal-overlay {
+    animation: fadeIn 0.2s ease-out;
+  }
+  .methodology-modal-container {
+    animation: scaleIn 0.2s ease-out;
+  }
+
   /* Base styles for responsive elements (hidden on desktop) */
   .mobile-menu-btn { display: none; }
   .mobile-overlay {
@@ -925,10 +947,29 @@ export const responsiveStyles = `
     z-index: 999;
   }
 
-  /* Methodology trigger hover */
+  /* Methodology trigger - class-based styling */
+  .methodology-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background-color: rgba(255,255,255,0.1);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.8);
+    transition: all 0.15s ease;
+    margin-right: 20px;
+  }
   .methodology-trigger:hover {
-    background-color: rgba(255,255,255,0.2) !important;
-    color: #FFFFFF !important;
+    background-color: rgba(255,255,255,0.2);
+    color: #FFFFFF;
+  }
+  .methodology-trigger-icon {
+    font-size: 16px;
+    opacity: 0.8;
   }
 
   /* Mobile Responsive Styles */
@@ -952,12 +993,12 @@ export const responsiveStyles = `
       display: none !important;
     }
     .methodology-trigger {
-      padding: 6px 10px !important;
-      font-size: 13px !important;
-      margin-right: 0 !important;
+      padding: 6px 10px;
+      font-size: 13px;
+      margin-right: 0;
     }
     .methodology-trigger span:last-child {
-      display: none !important;
+      display: none;
     }
     .main-layout {
       flex-direction: column !important;

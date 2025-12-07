@@ -48,11 +48,10 @@ const HeaderComponent = ({
           <button
             className="methodology-trigger"
             onClick={onOpenMethodology}
-            style={styles.methodologyTrigger}
             type="button"
             aria-label="Learn about the VIANEO methodology"
           >
-            <span style={styles.methodologyTriggerIcon} aria-hidden="true">ⓘ</span>
+            <span className="methodology-trigger-icon" aria-hidden="true">ⓘ</span>
             <span>Methodology</span>
           </button>
           {/* Progress Section */}
