@@ -40,6 +40,8 @@ import {
   ExpressModeSelector,
   ExpressProcessing,
   ExpressCompletion,
+  ExpressV2Input,
+  ExpressV2Results,
   MethodologyModal,
 } from './components/index.js';
 
@@ -84,6 +86,7 @@ export default function VianeoSprintAutomator() {
   const [copyFeedback, setCopyFeedback] = useState(null);
   const [assessmentMode, setAssessmentMode] = useState('step-by-step'); // 'step-by-step' | 'express'
   const [showMethodologyModal, setShowMethodologyModal] = useState(false);
+  const [extractingDocument, setExtractingDocument] = useState(false);
 
   // Express Assessment hook - handles all Express mode state and logic
   const {
@@ -95,6 +98,10 @@ export default function VianeoSprintAutomator() {
     startNewExpressAssessment: startNewAssessmentBase,
     generateDashboard,
     downloadDashboard,
+    // V2 functions
+    processExpressV2Assessment,
+    downloadExpressV2Report,
+    printExpressV2Report,
   } = useExpressAssessment({
     projectName,
     inputContent,
@@ -133,6 +140,34 @@ export default function VianeoSprintAutomator() {
   // Remove file handler
   const removeFile = useCallback((index) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // Document extraction handler for Express V2
+  const handleDocumentExtraction = useCallback(async (base64, fileName, fileType) => {
+    setExtractingDocument(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/extract-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: base64, fileName, fileType })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to extract document');
+      }
+
+      return result.data;
+    } catch (err) {
+      console.error('Document extraction error:', err);
+      setError(`Failed to extract document: ${err.message}`);
+      return null;
+    } finally {
+      setExtractingDocument(false);
+    }
   }, []);
 
   // Build context for step prompts
@@ -445,21 +480,12 @@ export default function VianeoSprintAutomator() {
               onCancel={cancelExpressAssessment}
             />
           ) : expressAssessment.status === 'complete' ? (
-            /* Express Mode: Completion View */
-            <ExpressCompletion
-              projectName={projectName}
+            /* Express Mode: Completion View - Use V2 Results */
+            <ExpressV2Results
               assessmentData={expressAssessment.outputs.assessmentData}
-              reportBlob={expressAssessment.outputs.reportBlob}
-              reportURL={expressAssessment.outputs.reportURL}
-              dashboardStatus={dashboard.status}
-              dashboardURL={dashboard.outputs.dashboardURL}
-              completionTime={expressAssessment.startTime ? new Date().toLocaleString() : null}
-              error={null}
-              onDownloadReport={downloadExpressReport}
-              onGenerateDashboard={generateDashboard}
-              onDownloadDashboard={downloadDashboard}
-              onStartNewAssessment={startNewExpressAssessment}
-              onRetry={processExpressAssessment}
+              onDownloadReport={downloadExpressV2Report}
+              onPrintReport={printExpressV2Report}
+              onStartNew={startNewExpressAssessment}
             />
           ) : expressAssessment.status === 'error' ? (
             /* Express Mode: Error View */
@@ -476,7 +502,7 @@ export default function VianeoSprintAutomator() {
               onGenerateDashboard={() => {}}
               onDownloadDashboard={() => {}}
               onStartNewAssessment={startNewExpressAssessment}
-              onRetry={processExpressAssessment}
+              onRetry={() => setAssessmentMode('express')}
             />
           ) : (
             /* Standard Mode: Step-by-Step View */
@@ -492,56 +518,52 @@ export default function VianeoSprintAutomator() {
               {/* Input Section (Step 0) */}
               {currentStep === 0 && (
                 <>
-                  <InputSection
-                    projectName={projectName}
-                    inputContent={inputContent}
-                    uploadedFiles={uploadedFiles}
-                    onProjectNameChange={setProjectName}
-                    onInputContentChange={setInputContent}
-                    onFileUpload={handleFileUpload}
-                    onRemoveFile={removeFile}
-                    onError={setError}
-                  />
-
-                  {/* Mode Selector (shown after user provides content) */}
-                  {inputContent.trim() && projectName && (
-                    <ExpressModeSelector
-                      selectedMode={assessmentMode}
-                      onModeChange={setAssessmentMode}
-                      disabled={isProcessing}
+                  {/* Express Mode: Use V2 Input Component */}
+                  {assessmentMode === 'express' ? (
+                    <ExpressV2Input
+                      onSubmit={processExpressV2Assessment}
+                      onExtract={handleDocumentExtraction}
+                      loading={expressAssessment.status === 'processing'}
+                      extracting={extractingDocument}
                     />
+                  ) : (
+                    /* Standard Mode: Use regular InputSection */
+                    <>
+                      <InputSection
+                        projectName={projectName}
+                        inputContent={inputContent}
+                        uploadedFiles={uploadedFiles}
+                        onProjectNameChange={setProjectName}
+                        onInputContentChange={setInputContent}
+                        onFileUpload={handleFileUpload}
+                        onRemoveFile={removeFile}
+                        onError={setError}
+                      />
+
+                      {/* Mode Selector (shown after user provides content) */}
+                      {inputContent.trim() && projectName && (
+                        <ExpressModeSelector
+                          selectedMode={assessmentMode}
+                          onModeChange={setAssessmentMode}
+                          disabled={isProcessing}
+                        />
+                      )}
+
+                      {/* Process Button for step-by-step mode */}
+                      <ProcessButton
+                        currentStep={currentStep}
+                        stepName={currentStepInfo.name}
+                        isProcessing={isProcessing}
+                        isDisabled={isProcessing || (currentStep === 0 && !inputContent.trim())}
+                        onClick={processStep}
+                      />
+                    </>
                   )}
                 </>
               )}
 
               {/* Error Display */}
               <ErrorBox error={error} />
-
-              {/* Process Button - Different based on mode */}
-              {assessmentMode === 'express' && currentStep === 0 && inputContent.trim() && projectName ? (
-                <button
-                  className="process-button btn-express"
-                  disabled={isProcessing}
-                  onClick={processExpressAssessment}
-                >
-                  {isProcessing ? (
-                    <>
-                      <span className="spinner" />
-                      Generating...
-                    </>
-                  ) : (
-                    'Generate 360 Business Validation Report'
-                  )}
-                </button>
-              ) : (
-                <ProcessButton
-                  currentStep={currentStep}
-                  stepName={currentStepInfo.name}
-                  isProcessing={isProcessing}
-                  isDisabled={isProcessing || (currentStep === 0 && !inputContent.trim())}
-                  onClick={processStep}
-                />
-              )}
 
               {/* Processing Log */}
               <ProcessingLog logs={processingLog} />
