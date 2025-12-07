@@ -36,6 +36,7 @@ import {
   OutputDisplay,
   Navigation,
   ErrorBox,
+  ErrorBoundary,
   ExpressModeSelector,
   ExpressProcessing,
   ExpressCompletion,
@@ -384,43 +385,49 @@ export default function VianeoSprintAutomator() {
   }, [setCurrentStep]);
 
   return (
-    <div style={styles.container}>
-      {/* Mobile Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="mobile-overlay"
-          onClick={closeMobileMenu}
-          aria-hidden="true"
-        />
-      )}
+    <ErrorBoundary
+      inputContent={inputContent}
+      stepOutputs={stepOutputs}
+      projectName={projectName}
+    >
+      <div className="app-container">
+        {/* Mobile Overlay - button for accessibility */}
+        {isMobileMenuOpen && (
+          <button
+            className="mobile-overlay"
+            onClick={closeMobileMenu}
+            aria-label="Close navigation menu"
+            type="button"
+          />
+        )}
 
-      {/* Header */}
-      <Header
-        completedSteps={completedSteps}
-        isMobileMenuOpen={isMobileMenuOpen}
-        onToggleMobileMenu={toggleMobileMenu}
-      />
-
-      {/* Main Layout */}
-      <div className="main-layout" style={styles.mainLayout}>
-        {/* Sidebar */}
-        <Sidebar
-          currentStep={currentStep}
-          stepOutputs={stepOutputs}
+        {/* Header */}
+        <Header
           completedSteps={completedSteps}
-          hasInput={inputContent.length > 0}
           isMobileMenuOpen={isMobileMenuOpen}
-          onStepSelect={handleStepSelect}
-          onDownloadAllAsZip={downloadAllAsZip}
-          onDownloadAllOutputs={downloadAllOutputs}
-          onDownloadAllOutputsAsHtml={downloadAllOutputsAsHtml}
-          onExportSession={exportSession}
-          onImportSession={handleImportSession}
-          onClearSession={handleClearSession}
+          onToggleMobileMenu={toggleMobileMenu}
         />
 
-        {/* Main Content */}
-        <main style={styles.mainContent}>
+        {/* Main Layout */}
+        <div className="main-layout">
+          {/* Sidebar */}
+          <Sidebar
+            currentStep={currentStep}
+            stepOutputs={stepOutputs}
+            completedSteps={completedSteps}
+            hasInput={inputContent.length > 0}
+            isMobileMenuOpen={isMobileMenuOpen}
+            onStepSelect={handleStepSelect}
+            onDownloadAllAsZip={downloadAllAsZip}
+            onDownloadAllOutputs={downloadAllOutputs}
+            onDownloadAllOutputsAsHtml={downloadAllOutputsAsHtml}
+            onExportSession={exportSession}
+            onImportSession={handleImportSession}
+            onClearSession={handleClearSession}
+          />
+
+          {/* Main Content */}
+          <main className="main-content">
           {/* Express Mode: Processing View */}
           {expressAssessment.status === 'processing' || expressAssessment.status === 'generating-report' ? (
             <ExpressProcessing
@@ -505,22 +512,17 @@ export default function VianeoSprintAutomator() {
               {/* Process Button - Different based on mode */}
               {assessmentMode === 'express' && currentStep === 0 && inputContent.trim() && projectName ? (
                 <button
-                  style={{
-                    ...styles.processButton,
-                    backgroundColor: '#00A3B5',
-                    boxShadow: '0 4px 12px rgba(0, 163, 181, 0.3)',
-                    ...(isProcessing ? styles.processButtonDisabled : {}),
-                  }}
+                  className="process-button btn-express"
                   disabled={isProcessing}
                   onClick={processExpressAssessment}
                 >
                   {isProcessing ? (
                     <>
-                      <span style={styles.spinner} />
+                      <span className="spinner" />
                       Generating...
                     </>
                   ) : (
-                    <>Generate 360 Business Validation Report</>
+                    'Generate 360 Business Validation Report'
                   )}
                 </button>
               ) : (
@@ -555,8 +557,9 @@ export default function VianeoSprintAutomator() {
               />
             </>
           )}
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
