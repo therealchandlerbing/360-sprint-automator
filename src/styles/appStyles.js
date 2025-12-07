@@ -467,9 +467,8 @@ export const styles = {
     cursor: 'not-allowed',
   },
 
-  // Mobile menu button
+  // Mobile menu button - display controlled by CSS media queries in App.css
   mobileMenuButton: {
-    display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     width: '40px',
