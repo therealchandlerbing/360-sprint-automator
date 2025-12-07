@@ -8,7 +8,7 @@
  */
 
 export const config = {
-  maxDuration: 60, // Allow up to 60 seconds for Claude API responses
+  maxDuration: 300, // Allow up to 5 minutes for Claude API responses (complex prompts need more time)
 };
 
 export default async function handler(req, res) {
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     const modelName = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20250514';
     const maxTokens = process.env.CLAUDE_MAX_TOKENS
       ? parseInt(process.env.CLAUDE_MAX_TOKENS, 10)
-      : 8000;
+      : 16000; // Increased to handle Express Mode (all 13 steps in one response)
 
     // Call Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -71,6 +71,7 @@ export default async function handler(req, res) {
         403: 'Access forbidden. API key may lack required permissions.',
         429: 'Rate limit exceeded. Please wait a moment and try again.',
         500: 'Claude API service error. Please try again.',
+        504: 'Request timed out. The AI is processing a complex request. Please try again.',
         529: 'Claude API is overloaded. Please try again in a few moments.',
       };
 
