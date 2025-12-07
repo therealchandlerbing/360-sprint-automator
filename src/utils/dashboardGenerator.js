@@ -3,6 +3,8 @@
 // Generates HTML dashboard from assessment data
 // ============================================
 
+import { formatDateForFilename, sanitizeProjectName } from './formatUtils.js';
+
 /**
  * Escape HTML to prevent XSS
  * @param {string} text - Text to escape
@@ -196,11 +198,12 @@ export const generateDashboardHTML = (assessmentData, projectNameOverride) => {
 
 /**
  * Generate dashboard filename
+ * Format: [ProjectName]_Dashboard_[dd.mm.yy].html
  * @param {string} projectName - Project name
  * @returns {string} Filename for dashboard
  */
 export const generateDashboardFilename = (projectName) => {
-  const safeName = (projectName || 'Assessment').replace(/\s+/g, '_');
-  const date = new Date().toISOString().split('T')[0];
-  return `360_Dashboard_${safeName}_${date}.html`;
+  const safeName = sanitizeProjectName(projectName);
+  const dateStr = formatDateForFilename();
+  return `${safeName}_Dashboard_${dateStr}.html`;
 };

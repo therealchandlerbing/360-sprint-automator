@@ -18,6 +18,7 @@ import {
   ImageRun,
   convertInchesToTwip,
 } from 'docx';
+import { formatDateForFilename, sanitizeProjectName } from './utils/formatUtils.js';
 
 import {
   REPORT_COLORS,
@@ -635,17 +636,12 @@ function generateSequenceNumber() {
 
 /**
  * Generate a safe filename from project name
+ * Format: [ProjectName]_Report_[dd.mm.yy].docx
  */
 export function generateReportFilename(projectName, date) {
-  const year = new Date(date || Date.now()).getFullYear();
-  const sequenceNumber = generateSequenceNumber();
-  const safeName = (projectName || 'Assessment')
-    .replace(/[^a-zA-Z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .substring(0, 30);
-  const dateStr = (date || new Date().toISOString().split('T')[0]).replace(/-/g, '');
-
-  return `360-BVR-${year}-${sequenceNumber}-${safeName}-${dateStr}.docx`;
+  const safeName = sanitizeProjectName(projectName);
+  const dateStr = formatDateForFilename(date);
+  return `${safeName}_Report_${dateStr}.docx`;
 }
 
 /**
