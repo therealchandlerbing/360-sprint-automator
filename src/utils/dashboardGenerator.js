@@ -195,12 +195,27 @@ export const generateDashboardHTML = (assessmentData, projectNameOverride) => {
 };
 
 /**
+ * Format date as dd.mm.yy
+ * @param {Date} date - Date to format
+ * @returns {string} Formatted date string
+ */
+const formatDateForFilename = (date = new Date()) => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}.${month}.${year}`;
+};
+
+/**
  * Generate dashboard filename
+ * Format: [ProjectName]_Dashboard_[dd.mm.yy].html
  * @param {string} projectName - Project name
  * @returns {string} Filename for dashboard
  */
 export const generateDashboardFilename = (projectName) => {
-  const safeName = (projectName || 'Assessment').replace(/\s+/g, '_');
-  const date = new Date().toISOString().split('T')[0];
-  return `360_Dashboard_${safeName}_${date}.html`;
+  const safeName = (projectName || 'Assessment')
+    .replace(/[^a-zA-Z0-9\s-]/g, '')
+    .replace(/\s+/g, '_');
+  const dateStr = formatDateForFilename();
+  return `${safeName}_Dashboard_${dateStr}.html`;
 };

@@ -634,18 +634,38 @@ function generateSequenceNumber() {
 }
 
 /**
+ * Format date as dd.mm.yy
+ * @param {string|Date} date - Date to format
+ * @returns {string} Formatted date string
+ */
+function formatDateForFilename(date) {
+  const d = date ? new Date(date) : new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = String(d.getFullYear()).slice(-2);
+  return `${day}.${month}.${year}`;
+}
+
+/**
+ * Sanitize project name for use in filename
+ * @param {string} projectName - Project name to sanitize
+ * @returns {string} Sanitized name
+ */
+function sanitizeProjectName(projectName) {
+  return (projectName || 'Assessment')
+    .replace(/[^a-zA-Z0-9\s-]/g, '')
+    .replace(/\s+/g, '_')
+    .substring(0, 50);
+}
+
+/**
  * Generate a safe filename from project name
+ * Format: [ProjectName]_Report_[dd.mm.yy].docx
  */
 export function generateReportFilename(projectName, date) {
-  const year = new Date(date || Date.now()).getFullYear();
-  const sequenceNumber = generateSequenceNumber();
-  const safeName = (projectName || 'Assessment')
-    .replace(/[^a-zA-Z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .substring(0, 30);
-  const dateStr = (date || new Date().toISOString().split('T')[0]).replace(/-/g, '');
-
-  return `360-BVR-${year}-${sequenceNumber}-${safeName}-${dateStr}.docx`;
+  const safeName = sanitizeProjectName(projectName);
+  const dateStr = formatDateForFilename(date);
+  return `${safeName}_Report_${dateStr}.docx`;
 }
 
 /**
