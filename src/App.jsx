@@ -3,26 +3,26 @@
 // Refactored modular architecture with Express Mode
 // ============================================
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import JSZip from 'jszip';
 
 // Constants
 import { STEPS } from './constants/steps.js';
 import { STEP_PROMPTS, injectDynamicValues } from './constants/prompts.js';
-import { getExpressModePrompts, validateExpressAssessment } from './constants/expressPrompt.js';
 
 // Utilities
 import { markdownToHtml } from './utils/markdownToHtml.js';
 import { HTML_TEMPLATE } from './utils/htmlTemplate.js';
-import { generateDOCXReport, downloadDOCX, generateFilename } from './utils/docxGenerator.js';
 
 // Styles
-import { styles, responsiveStyles } from './styles/appStyles.js';
+import { styles } from './styles/appStyles.js';
+import './App.css';
 
 // Hooks
 import { useSessionPersistence } from './hooks/useSessionPersistence.js';
 import { useMobileMenu } from './hooks/useMobileMenu.js';
 import { useClaudeAPI } from './hooks/useClaudeAPI.js';
+import { useExpressAssessment } from './hooks/useExpressAssessment.js';
 
 // Components
 import {
@@ -80,48 +80,30 @@ export default function VianeoSprintAutomator() {
   const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [error, setError] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(null);
-
-  // Express Assessment Mode state
   const [assessmentMode, setAssessmentMode] = useState('step-by-step'); // 'step-by-step' | 'express'
-  const [expressAssessment, setExpressAssessment] = useState({
-    status: 'idle', // 'idle' | 'processing' | 'generating-report' | 'complete' | 'error'
-    progress: {
-      stage: null,
-      percentage: 0,
-      message: '',
-    },
-    startTime: null,
-    outputs: {
-      assessmentData: null,
-      reportBlob: null,
-      reportURL: null,
-    },
-    error: null,
-  });
-  const [dashboard, setDashboard] = useState({
-    status: 'not-started', // 'not-started' | 'processing' | 'complete' | 'error'
-    outputs: {
-      dashboardBlob: null,
-      dashboardURL: null,
-    },
+
+  // Express Assessment hook - handles all Express mode state and logic
+  const {
+    expressAssessment,
+    dashboard,
+    processExpressAssessment,
+    cancelExpressAssessment,
+    downloadExpressReport,
+    startNewExpressAssessment: startNewAssessmentBase,
+    generateDashboard,
+    downloadDashboard,
+  } = useExpressAssessment({
+    projectName,
+    inputContent,
+    callClaudeAPI,
+    setError,
   });
 
-  // Ref to track if Express mode should be cancelled
-  const expressAbortRef = useRef(false);
-
-  // Cleanup URLs on unmount to prevent memory leaks
-  useEffect(() => {
-    const reportURL = expressAssessment.outputs.reportURL;
-    const dashboardURL = dashboard.outputs.dashboardURL;
-    return () => {
-      if (reportURL) {
-        URL.revokeObjectURL(reportURL);
-      }
-      if (dashboardURL) {
-        URL.revokeObjectURL(dashboardURL);
-      }
-    };
-  }, [expressAssessment.outputs.reportURL, dashboard.outputs.dashboardURL]);
+  // Wrap startNewAssessment to also reset assessment mode
+  const startNewExpressAssessment = useCallback(() => {
+    startNewAssessmentBase();
+    setAssessmentMode('step-by-step');
+  }, [startNewAssessmentBase]);
 
   // Derived state
   const completedSteps = Object.keys(stepOutputs).length;
@@ -174,417 +156,6 @@ export default function VianeoSprintAutomator() {
 
     return context;
   }, [stepOutputs]);
-
-  // Express Mode: Process comprehensive assessment
-  const processExpressAssessment = useCallback(async () => {
-    if (!inputContent.trim()) {
-      setError('Please upload files or paste content to analyze');
-      return;
-    }
-
-    expressAbortRef.current = false;
-
-    // Initialize processing state
-    setExpressAssessment({
-      status: 'processing',
-      progress: { stage: 'foundation', percentage: 5, message: 'Starting comprehensive VIANEO assessment...' },
-      startTime: Date.now(),
-      outputs: { assessmentData: null, reportBlob: null, reportURL: null },
-      error: null,
-    });
-    setDashboard({ status: 'not-started', outputs: { dashboardBlob: null, dashboardURL: null } });
-    setError(null);
-
-    try {
-      // Get the Express mode prompts
-      const { systemPrompt, userPrompt } = getExpressModePrompts(projectName, inputContent);
-
-      // Update progress: Foundation phase
-      setExpressAssessment(prev => ({
-        ...prev,
-        progress: { stage: 'foundation', percentage: 10, message: 'Analyzing executive brief and diagnostic data...' },
-      }));
-
-      // Create progress update handler
-      const progressHandler = (message) => {
-        if (expressAbortRef.current) return;
-
-        // Parse progress from message if possible
-        let percentage = 15;
-        let stage = 'foundation';
-
-        if (message.includes('diagnostic') || message.includes('40Q')) {
-          percentage = 25;
-          stage = 'foundation';
-        } else if (message.includes('maturity') || message.includes('market')) {
-          percentage = 35;
-          stage = 'deep-dive';
-        } else if (message.includes('legitimacy') || message.includes('needs')) {
-          percentage = 45;
-          stage = 'deep-dive';
-        } else if (message.includes('persona') || message.includes('ecosystem')) {
-          percentage = 55;
-          stage = 'deep-dive';
-        } else if (message.includes('synthesis') || message.includes('diagnostic comment')) {
-          percentage = 70;
-          stage = 'synthesis';
-        } else if (message.includes('features') || message.includes('matrix')) {
-          percentage = 80;
-          stage = 'synthesis';
-        } else if (message.includes('viability') || message.includes('gate')) {
-          percentage = 85;
-          stage = 'viability';
-        }
-
-        setExpressAssessment(prev => ({
-          ...prev,
-          progress: { stage, percentage, message: message.substring(0, 100) },
-        }));
-      };
-
-      // Call Claude API with Express mode prompt
-      const data = await callClaudeAPI(systemPrompt, userPrompt, progressHandler);
-
-      if (expressAbortRef.current) {
-        setExpressAssessment(prev => ({ ...prev, status: 'idle' }));
-        return;
-      }
-
-      // Extract the text response
-      const responseText = data.content
-        .filter(item => item.type === 'text')
-        .map(item => item.text)
-        .join('\n');
-
-      // Update progress: Parsing response
-      setExpressAssessment(prev => ({
-        ...prev,
-        progress: { stage: 'viability', percentage: 90, message: 'Parsing assessment data...' },
-      }));
-
-      // Parse JSON from response
-      let assessmentData;
-      try {
-        // Try to extract JSON from the response
-        // Handle case where response might have markdown code blocks
-        let jsonStr = responseText;
-
-        // Remove markdown code blocks if present
-        const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (jsonMatch) {
-          jsonStr = jsonMatch[1];
-        }
-
-        assessmentData = JSON.parse(jsonStr.trim());
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        // Try to recover by finding JSON-like content
-        const jsonStart = responseText.indexOf('{');
-        const jsonEnd = responseText.lastIndexOf('}');
-        if (jsonStart !== -1 && jsonEnd !== -1) {
-          try {
-            assessmentData = JSON.parse(responseText.substring(jsonStart, jsonEnd + 1));
-          } catch {
-            throw new Error('Failed to parse assessment data. The AI response was not in the expected JSON format.');
-          }
-        } else {
-          throw new Error('Failed to parse assessment data. The AI response was not in the expected JSON format.');
-        }
-      }
-
-      // Validate the assessment data
-      const validation = validateExpressAssessment(assessmentData);
-      if (!validation.valid) {
-        console.warn('Assessment validation warnings:', validation.warnings);
-        console.error('Assessment validation errors:', validation.errors);
-      }
-
-      if (expressAbortRef.current) {
-        setExpressAssessment(prev => ({ ...prev, status: 'idle' }));
-        return;
-      }
-
-      // Update progress: Generating report
-      setExpressAssessment(prev => ({
-        ...prev,
-        status: 'generating-report',
-        progress: { stage: 'formatting', percentage: 95, message: 'Generating DOCX report...' },
-        outputs: { ...prev.outputs, assessmentData },
-      }));
-
-      // Generate DOCX report
-      const reportBlob = await generateDOCXReport(assessmentData);
-      const reportURL = URL.createObjectURL(reportBlob);
-
-      if (expressAbortRef.current) {
-        URL.revokeObjectURL(reportURL);
-        setExpressAssessment(prev => ({ ...prev, status: 'idle' }));
-        return;
-      }
-
-      // Complete!
-      setExpressAssessment(prev => ({
-        ...prev,
-        status: 'complete',
-        progress: { stage: 'formatting', percentage: 100, message: 'Assessment complete!' },
-        outputs: {
-          assessmentData,
-          reportBlob,
-          reportURL,
-        },
-      }));
-
-    } catch (err) {
-      console.error('Express assessment error:', err);
-      setExpressAssessment(prev => ({
-        ...prev,
-        status: 'error',
-        error: err.message || 'An unknown error occurred',
-      }));
-      setError(`Express Assessment Error: ${err.message}`);
-    }
-  }, [inputContent, projectName, callClaudeAPI]);
-
-  // Cancel Express assessment
-  const cancelExpressAssessment = useCallback(() => {
-    expressAbortRef.current = true;
-    setExpressAssessment(prev => ({
-      ...prev,
-      status: 'idle',
-      progress: { stage: null, percentage: 0, message: '' },
-    }));
-  }, []);
-
-  // Download Express report
-  const downloadExpressReport = useCallback(() => {
-    const { reportBlob, assessmentData } = expressAssessment.outputs;
-    if (!reportBlob) return;
-
-    const date = assessmentData?.metadata?.assessmentDate || new Date().toISOString().split('T')[0];
-    const filename = generateFilename(projectName || assessmentData?.metadata?.projectName, date);
-    downloadDOCX(reportBlob, filename);
-  }, [expressAssessment.outputs, projectName]);
-
-  // Start new Express assessment
-  const startNewExpressAssessment = useCallback(() => {
-    // Clean up existing URLs
-    if (expressAssessment.outputs.reportURL) {
-      URL.revokeObjectURL(expressAssessment.outputs.reportURL);
-    }
-    if (dashboard.outputs.dashboardURL) {
-      URL.revokeObjectURL(dashboard.outputs.dashboardURL);
-    }
-
-    setExpressAssessment({
-      status: 'idle',
-      progress: { stage: null, percentage: 0, message: '' },
-      startTime: null,
-      outputs: { assessmentData: null, reportBlob: null, reportURL: null },
-      error: null,
-    });
-    setDashboard({ status: 'not-started', outputs: { dashboardBlob: null, dashboardURL: null } });
-    setAssessmentMode('step-by-step');
-  }, [expressAssessment.outputs.reportURL, dashboard.outputs.dashboardURL]);
-
-  // Generate dashboard (placeholder - can be expanded later)
-  const generateDashboard = useCallback(async () => {
-    setDashboard(prev => ({ ...prev, status: 'processing' }));
-
-    try {
-      const { assessmentData } = expressAssessment.outputs;
-      if (!assessmentData) {
-        throw new Error('No assessment data available');
-      }
-
-      // HTML escape function to prevent XSS
-      const escapeHtml = (text) => {
-        if (text == null) return '';
-        return String(text)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
-      };
-
-      // Safe JSON serialization for script context
-      const safeJsonStringify = (obj) => {
-        return JSON.stringify(obj)
-          .replace(/</g, '\\u003c')
-          .replace(/>/g, '\\u003e')
-          .replace(/&/g, '\\u0026');
-      };
-
-      // Extract and sanitize values
-      const projectName = escapeHtml(assessmentData.metadata?.projectName || 'Assessment');
-      const assessmentDate = escapeHtml(assessmentData.metadata?.assessmentDate || new Date().toISOString().split('T')[0]);
-      const recommendation = assessmentData.executiveSummary?.recommendation || 'N/A';
-      const recommendationDisplay = escapeHtml(recommendation.replace('_', ' '));
-      const investmentScore = assessmentData.executiveSummary?.investmentReadinessScore || '--';
-      const overallScore = assessmentData.marketMaturity?.weightedOverall?.toFixed(1) || '--';
-
-      // Determine recommendation color class (safe - no user input)
-      const recommendationColorClass = recommendation === 'GO' ? 'text-green-600' :
-        recommendation === 'CONDITIONAL_GO' ? 'text-yellow-600' : 'text-red-600';
-
-      // Sanitize arrays
-      const keyStrengths = (assessmentData.executiveSummary?.keyStrengths || [])
-        .map(s => `<li class="flex items-center gap-2"><span class="text-green-500">✓</span>${escapeHtml(s)}</li>`)
-        .join('');
-      const criticalRisks = (assessmentData.executiveSummary?.criticalRisks || [])
-        .map(r => `<li class="flex items-center gap-2"><span class="text-red-500">!</span>${escapeHtml(r)}</li>`)
-        .join('');
-
-      // Generate simple HTML dashboard
-      const dashboardHTML = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>360 Business Validation Dashboard - ${projectName}</title>
-  <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-BgkHqOx+R5MZaH4g/KbELKXhQCQM0HZ2u+V1r8q5OvfR6pT8HxL9V0FbHLn6Mj35" crossorigin="anonymous"></script>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  </style>
-</head>
-<body class="bg-gray-100 min-h-screen">
-  <header class="bg-gradient-to-r from-slate-800 to-slate-700 text-white p-6">
-    <h1 class="text-2xl font-bold">360 Business Validation Dashboard</h1>
-    <p class="text-gray-300">${projectName} | ${assessmentDate}</p>
-  </header>
-
-  <main class="container mx-auto p-6">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      <div class="card p-6 text-center">
-        <div class="text-4xl font-bold ${recommendationColorClass}">
-          ${recommendationDisplay}
-        </div>
-        <div class="text-gray-500 uppercase text-sm mt-2">Recommendation</div>
-      </div>
-      <div class="card p-6 text-center">
-        <div class="text-4xl font-bold text-slate-800">${escapeHtml(investmentScore)}</div>
-        <div class="text-gray-500 uppercase text-sm mt-2">Investment Readiness Score</div>
-      </div>
-      <div class="card p-6 text-center">
-        <div class="text-4xl font-bold text-slate-800">${escapeHtml(overallScore)}</div>
-        <div class="text-gray-500 uppercase text-sm mt-2">Overall VIANEO Score</div>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="card p-6">
-        <h2 class="text-lg font-semibold mb-4">Diagnostic Scores</h2>
-        <canvas id="diagnosticChart"></canvas>
-      </div>
-      <div class="card p-6">
-        <h2 class="text-lg font-semibold mb-4">VIANEO Dimensions</h2>
-        <canvas id="vianeoChart"></canvas>
-      </div>
-    </div>
-
-    <div class="card p-6 mt-6">
-      <h2 class="text-lg font-semibold mb-4">Key Strengths</h2>
-      <ul class="space-y-2">
-        ${keyStrengths}
-      </ul>
-    </div>
-
-    <div class="card p-6 mt-6">
-      <h2 class="text-lg font-semibold mb-4">Critical Risks</h2>
-      <ul class="space-y-2">
-        ${criticalRisks}
-      </ul>
-    </div>
-  </main>
-
-  <script>
-    const data = ${safeJsonStringify(assessmentData)};
-
-    // Diagnostic Chart
-    const diagCtx = document.getElementById('diagnosticChart').getContext('2d');
-    new Chart(diagCtx, {
-      type: 'bar',
-      data: {
-        labels: ['Team', 'Technology', 'Management', 'Commercial'],
-        datasets: [{
-          label: 'Score',
-          data: [
-            data.diagnosticAssessment?.team?.score || 0,
-            data.diagnosticAssessment?.technology?.score || 0,
-            data.diagnosticAssessment?.management?.score || 0,
-            data.diagnosticAssessment?.commercial?.score || 0
-          ],
-          backgroundColor: ['#0A2540', '#0D5A66', '#1E6B4F', '#7C3AED']
-        }]
-      },
-      options: {
-        scales: { y: { beginAtZero: true, max: 5 } },
-        plugins: { legend: { display: false } }
-      }
-    });
-
-    // VIANEO Radar Chart
-    const vianeoCtx = document.getElementById('vianeoChart').getContext('2d');
-    new Chart(vianeoCtx, {
-      type: 'radar',
-      data: {
-        labels: ['Legitimacy', 'Desirability', 'Acceptability', 'Feasibility', 'Viability'],
-        datasets: [{
-          label: 'Score',
-          data: [
-            data.marketMaturity?.legitimacy?.score || 0,
-            data.marketMaturity?.desirability?.score || 0,
-            data.marketMaturity?.acceptability?.score || 0,
-            data.marketMaturity?.feasibility?.score || 0,
-            data.marketMaturity?.viability?.score || 0
-          ],
-          borderColor: '#00A3B5',
-          backgroundColor: 'rgba(0, 163, 181, 0.2)'
-        }, {
-          label: 'Threshold',
-          data: [3.0, 3.5, 3.0, 3.0, 3.0],
-          borderColor: '#F59E0B',
-          borderDash: [5, 5],
-          backgroundColor: 'transparent'
-        }]
-      },
-      options: {
-        scales: { r: { beginAtZero: true, max: 5 } }
-      }
-    });
-  </script>
-</body>
-</html>`;
-
-      const dashboardBlob = new Blob([dashboardHTML], { type: 'text/html' });
-      const dashboardURL = URL.createObjectURL(dashboardBlob);
-
-      setDashboard({
-        status: 'complete',
-        outputs: { dashboardBlob, dashboardURL },
-      });
-    } catch (err) {
-      console.error('Dashboard generation error:', err);
-      setDashboard(prev => ({ ...prev, status: 'error' }));
-    }
-  }, [expressAssessment.outputs]);
-
-  // Download dashboard
-  const downloadDashboard = useCallback(() => {
-    const { dashboardBlob } = dashboard.outputs;
-    if (!dashboardBlob) return;
-
-    const filename = `360_Dashboard_${(projectName || 'Assessment').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
-    const url = URL.createObjectURL(dashboardBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [dashboard.outputs, projectName]);
 
   // Process current step
   const processStep = useCallback(async () => {
@@ -814,9 +385,6 @@ export default function VianeoSprintAutomator() {
 
   return (
     <div style={styles.container}>
-      {/* Responsive CSS */}
-      <style>{responsiveStyles}</style>
-
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
         <div
@@ -840,7 +408,7 @@ export default function VianeoSprintAutomator() {
           currentStep={currentStep}
           stepOutputs={stepOutputs}
           completedSteps={completedSteps}
-          inputContent={inputContent}
+          hasInput={inputContent.length > 0}
           isMobileMenuOpen={isMobileMenuOpen}
           onStepSelect={handleStepSelect}
           onDownloadAllAsZip={downloadAllAsZip}

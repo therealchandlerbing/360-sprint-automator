@@ -17,3 +17,7 @@ export { ErrorBox } from './ErrorBox.jsx';
 export { ExpressModeSelector } from './ExpressModeSelector.jsx';
 export { ExpressProcessing } from './ExpressProcessing.jsx';
 export { ExpressCompletion } from './ExpressCompletion.jsx';
+
+// V2.0 Components
+export { default as ErrorBoundary } from './ErrorBoundary.jsx';
+export { default as VirtualizedLog, SimpleProcessingLog } from './VirtualizedLog.jsx';
