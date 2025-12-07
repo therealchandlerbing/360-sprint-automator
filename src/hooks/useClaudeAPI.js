@@ -52,7 +52,7 @@ export const useClaudeAPI = () => {
           throw new Error(errorMessage);
         }
 
-        // Log success after retry
+        // Log success message if request succeeded after retrying
         if (attempt > 0) {
           addLog?.(`Request succeeded after ${attempt} ${attempt === 1 ? 'retry' : 'retries'}`);
         }
