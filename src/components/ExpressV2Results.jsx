@@ -215,7 +215,7 @@ const ExpressV2ResultsComponent = ({
             </div>
           </div>
           <div>
-            <svg width="120" height="120" viewBox="0 0 120 120">
+            <svg width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
               <circle
                 cx="60"
                 cy="60"

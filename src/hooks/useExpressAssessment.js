@@ -345,11 +345,11 @@ export function useExpressAssessment({ projectName, inputContent, callClaudeAPI,
       // Update progress stages for V2
       const V2_PROGRESS_STAGES = [
         { percentage: 10, message: 'Analyzing Legitimacy & Market Validation...' },
-        { percentage: 30, message: 'Evaluating Desirability & Product-Market Fit...' },
-        { percentage: 50, message: 'Assessing Acceptability & Ecosystem Support...' },
-        { percentage: 70, message: 'Determining Feasibility & Deliverability...' },
-        { percentage: 85, message: 'Calculating Viability & Sustainability...' },
-        { percentage: 90, message: 'Performing Cross-Dimensional Analysis...' },
+        { percentage: 25, message: 'Evaluating Desirability & Product-Market Fit...' },
+        { percentage: 45, message: 'Assessing Acceptability & Ecosystem Support...' },
+        { percentage: 60, message: 'Determining Feasibility & Deliverability...' },
+        { percentage: 75, message: 'Calculating Viability & Sustainability...' },
+        { percentage: 88, message: 'Performing Cross-Dimensional Analysis...' },
       ];
 
       let currentStage = 0;

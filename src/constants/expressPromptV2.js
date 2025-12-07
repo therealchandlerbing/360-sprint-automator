@@ -122,6 +122,7 @@ Provide a DEEP, MULTI-LAYERED analysis using the VIANEO Framework. For each of t
 9. **30/60/90 day projections** (what should happen in each timeframe)
 10. **Key metrics** to track for this dimension
 11. **Competitive positioning** (vs. market standards)
+12. **Resource priorities** (areas requiring immediate resource allocation)
 
 ### The 5 Dimensions with Sub-Dimensions:
 
@@ -285,7 +286,7 @@ Additionally, provide:
 - Interaction matrix showing how dimensions influence each other
 - Executive summary
 - Top strengths, critical risks, immediate actions
-- Resource priorities
+- Resource priorities (3-4 prioritized areas where resources should be allocated)
 
 Return ONLY valid JSON matching the schema. Be rigorous - if evidence is missing, score lower and note it. Do NOT inflate scores based on assumptions.`;
 

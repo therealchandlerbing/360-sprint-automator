@@ -105,11 +105,13 @@ If information for a field is not found, include the field with an empty string.
         }
       ];
     } else {
-      // For binary files (PDF, DOCX, PPTX), send as document
+      // For binary files (PDF, DOCX, PPTX, DOC, PPT), send as document
       const mediaType = fileType === 'application/pdf' ? 'application/pdf' :
                         fileName.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' :
+                        fileName.endsWith('.doc') ? 'application/msword' :
                         fileName.endsWith('.pptx') ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation' :
-                        'application/pdf';
+                        fileName.endsWith('.ppt') ? 'application/vnd.ms-powerpoint' :
+                        'application/octet-stream';
 
       messageContent = [
         {
@@ -146,7 +148,7 @@ If information for a field is not found, include the field with an empty string.
     const modelName = process.env.CLAUDE_MODEL || DEFAULT_CLAUDE_MODEL;
     const response = await client.messages.create({
       model: modelName,
-      max_tokens: 4000,
+      max_tokens: 8000,
       messages: [
         {
           role: 'user',
