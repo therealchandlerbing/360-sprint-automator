@@ -84,16 +84,16 @@ const SidebarComponent = ({
                       style={{
                         ...styles.stepNumber,
                         backgroundColor: isComplete
-                          ? '#10B981'
+                          ? COLORS.success
                           : isActive
                             ? phaseColors.bg
                             : 'transparent',
                         border: isComplete || isActive
                           ? 'none'
-                          : '2px solid #E2E8F0',
+                          : `2px solid ${COLORS.border}`,
                         color: isComplete || isActive
-                          ? '#FFFFFF'
-                          : '#A0AEC0',
+                          ? COLORS.white
+                          : COLORS.textExtraMuted,
                         boxShadow: isComplete
                           ? '0 1px 3px rgba(16, 185, 129, 0.3)'
                           : isActive
@@ -107,7 +107,7 @@ const SidebarComponent = ({
                     <span style={{
                       ...styles.stepName,
                       fontWeight: isActive ? '600' : '400',
-                      color: isActive ? '#1A202C' : '#4A5568',
+                      color: isActive ? COLORS.textPrimary : COLORS.textSecondary,
                     }}>
                       {step.name}
                     </span>

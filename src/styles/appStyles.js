@@ -330,7 +330,7 @@ export const styles = {
   removeButton: {
     width: '24px',
     height: '24px',
-    backgroundColor: '#FEE2E2',
+    backgroundColor: COLORS.errorLightAlt,
     color: COLORS.error,
     border: 'none',
     borderRadius: '50%',
@@ -370,39 +370,7 @@ export const styles = {
     color: COLORS.textMuted,
   },
 
-  // Buttons
-  processButton: {
-    width: '100%',
-    padding: '16px 32px',
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#FFFFFF',
-    background: 'linear-gradient(to bottom, #475569, #334155)',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    transition: 'all 0.15s ease-out',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '12px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.1)',
-  },
-  processButtonDisabled: {
-    background: '#E2E8F0',
-    color: '#A0AEC0',
-    cursor: 'not-allowed',
-    boxShadow: 'none',
-    transform: 'none',
-  },
-  spinner: {
-    width: '20px',
-    height: '20px',
-    border: '3px solid rgba(255,255,255,0.3)',
-    borderTopColor: COLORS.white,
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-  },
+  // Note: processButton styles are now in App.css (.process-button class)
 
   // Output
   outputHeader: {
@@ -441,24 +409,24 @@ export const styles = {
   logContainer: {
     marginTop: '16px',
     padding: '16px',
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.logBackground,
     borderRadius: '10px',
     fontFamily: '"SF Mono", "Menlo", "Monaco", monospace',
     fontSize: '13px',
   },
   logEntry: {
-    color: '#94A3B8',
+    color: COLORS.logText,
     marginBottom: '4px',
   },
   logTime: {
-    color: '#64748B',
+    color: COLORS.logTimestamp,
   },
 
   // Error
   errorBox: {
     padding: '16px 20px',
-    backgroundColor: '#FEF2F2',
-    border: `1px solid #FECACA`,
+    backgroundColor: COLORS.errorLight,
+    border: `1px solid ${COLORS.errorBorder}`,
     borderRadius: '10px',
     marginBottom: '24px',
     display: 'flex',
@@ -557,9 +525,9 @@ export const styles = {
     padding: '12px 10px',
     fontSize: '13px',
     fontWeight: '600',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: COLORS.errorLight,
     color: COLORS.error,
-    border: '1px solid #FECACA',
+    border: `1px solid ${COLORS.errorBorder}`,
     borderRadius: '8px',
     cursor: 'pointer',
   },
@@ -751,7 +719,7 @@ export const styles = {
     marginTop: '16px',
   },
   modalCalloutEmphasis: {
-    backgroundColor: '#FEF3CD',
+    backgroundColor: COLORS.warningLight,
     padding: '16px 20px',
     borderRadius: '8px',
     fontSize: '14px',
@@ -980,7 +948,7 @@ export const responsiveStyles = `
   }
   .methodology-trigger:hover {
     background-color: rgba(255,255,255,0.2);
-    color: #FFFFFF;
+    color: ${COLORS.white};
   }
   .methodology-trigger-icon {
     font-size: 16px;

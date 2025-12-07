@@ -12,6 +12,9 @@
   --color-white: #FFFFFF;
   --color-disabled-bg: #E2E8F0;
   --color-disabled-text: #718096;
+  --color-focus-ring: #0D9488;
+  --color-text-muted: #A0AEC0;
+  --color-border-hover: #CBD5E0;
 }
 
 /* Main Layout Classes */
@@ -40,7 +43,7 @@
   padding: 16px 32px;
   font-size: 14px;
   font-weight: 500;
-  color: #FFFFFF;
+  color: var(--color-white);
   background: linear-gradient(to bottom, #475569, #334155);
   border: none;
   border-radius: 10px;
@@ -66,8 +69,8 @@
 }
 
 .process-button:disabled {
-  background: #E2E8F0;
-  color: #A0AEC0;
+  background: var(--color-disabled-bg);
+  color: var(--color-text-muted);
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
@@ -102,22 +105,25 @@
   }
 }
 
-/* Form Element Focus States */
+/*
+ * Form Element Focus States
+ * Note: !important is used to override inline styles from React components
+ */
 input:focus,
 textarea:focus {
   outline: none;
-  border-color: #0D9488 !important;
+  border-color: var(--color-focus-ring) !important;
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15) !important;
 }
 
 input:hover,
 textarea:hover {
-  border-color: #CBD5E0;
+  border-color: var(--color-border-hover);
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #A0AEC0;
+  color: var(--color-text-muted);
 }
 
 /* Button Hover Effect */
@@ -133,18 +139,24 @@ button:focus-visible {
 
 /* File upload zone hover */
 .upload-zone:hover {
-  border-color: #14B8A6 !important;
+  border-color: var(--color-focus-ring) !important;
   background: rgba(20, 184, 166, 0.05) !important;
 }
 
 /* Navigation secondary button hover */
 .nav-buttons button:first-child:hover:not(:disabled) {
-  border-color: #CBD5E0;
-  background-color: #F7FAFC;
+  border-color: var(--color-border-hover);
+  background-color: var(--color-background);
   color: #1A202C;
 }
 
-/* Base styles for responsive elements (hidden on desktop) */
+/*
+ * Base styles for responsive elements (hidden on desktop)
+ * Note: !important declarations in media queries below are necessary
+ * to override inline styles applied by React components via the style prop.
+ * This is the standard pattern for responsive overrides when components
+ * use JavaScript-generated inline styles.
+ */
 .mobile-menu-btn {
   display: none;
 }

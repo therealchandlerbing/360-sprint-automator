@@ -4,7 +4,8 @@
 // Enhanced with gradient, hover, and pressed states
 // ============================================
 
-import React, { useState, memo } from 'react';
+import React, { memo } from 'react';
+import { COLORS } from '../constants/colors.js';
 
 // Helper text for each step
 const STEP_HELPER_TEXT = {
@@ -26,62 +27,6 @@ const STEP_HELPER_TEXT = {
 const STEPS_WITH_CUSTOM_UI = [0];
 
 /**
- * Compute execute button style based on state
- */
-const getExecuteButtonStyle = (isHovered, isPressed, isDisabled) => {
-  const base = {
-    width: '100%',
-    padding: '16px 32px',
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#FFFFFF',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: isDisabled ? 'not-allowed' : 'pointer',
-    transition: 'all 0.15s ease-out',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '12px',
-  };
-
-  if (isDisabled) {
-    return {
-      ...base,
-      background: '#E2E8F0',
-      color: '#A0AEC0',
-      boxShadow: 'none',
-      transform: 'none',
-    };
-  }
-
-  if (isPressed) {
-    return {
-      ...base,
-      background: 'linear-gradient(to bottom, #334155, #1E293B)',
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.1)',
-      transform: 'translateY(0)',
-    };
-  }
-
-  if (isHovered) {
-    return {
-      ...base,
-      background: 'linear-gradient(to bottom, #64748B, #475569)',
-      boxShadow: '0 10px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08)',
-      transform: 'translateY(-1px)',
-    };
-  }
-
-  return {
-    ...base,
-    background: 'linear-gradient(to bottom, #475569, #334155)',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.1)',
-    transform: 'translateY(0)',
-  };
-};
-
-/**
  * Process step execution button
  * Memoized to prevent unnecessary re-renders
  */
@@ -92,16 +37,13 @@ const ProcessButtonComponent = ({
   isDisabled,
   onClick,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
-
   const isMinimalStep = !STEPS_WITH_CUSTOM_UI.includes(currentStep);
   const helperText = STEP_HELPER_TEXT[currentStep];
 
   // Minimal step layout - centered with helper text
   if (isMinimalStep) {
     return (
-      <div style={{
+      <div className="minimal-step-layout" style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -116,14 +58,7 @@ const ProcessButtonComponent = ({
           disabled={isDisabled}
           aria-busy={isProcessing}
           aria-label={isProcessing ? `Processing Step ${currentStep}` : `Execute Step ${currentStep}: ${stepName}`}
-          style={{
-            ...getExecuteButtonStyle(isHovered, isPressed, isDisabled),
-            maxWidth: '400px',
-          }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => { setIsHovered(false); setIsPressed(false); }}
-          onMouseDown={() => !isDisabled && setIsPressed(true)}
-          onMouseUp={() => setIsPressed(false)}
+          style={{ maxWidth: '400px' }}
         >
           {isProcessing ? (
             <>
@@ -137,7 +72,7 @@ const ProcessButtonComponent = ({
         {helperText && (
           <p style={{
             fontSize: '14px',
-            color: '#718096',
+            color: COLORS.textMuted,
             marginTop: '20px',
             maxWidth: '400px',
             lineHeight: '1.5',
@@ -157,11 +92,6 @@ const ProcessButtonComponent = ({
       disabled={isDisabled}
       aria-busy={isProcessing}
       aria-label={isProcessing ? `Processing Step ${currentStep}` : `Execute Step ${currentStep}: ${stepName}`}
-      style={getExecuteButtonStyle(isHovered, isPressed, isDisabled)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => { setIsHovered(false); setIsPressed(false); }}
-      onMouseDown={() => !isDisabled && setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
     >
       {isProcessing ? (
         <>
