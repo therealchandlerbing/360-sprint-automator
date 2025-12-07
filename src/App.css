@@ -89,10 +89,13 @@
   }
 }
 
-/* Form Element Focus States */
+/*
+ * Form Element Focus States
+ * Note: !important is used to override inline styles from React components
+ */
 input:focus,
 textarea:focus {
-  border-color: #00A3B5 !important;
+  border-color: var(--color-primary-accent) !important;
 }
 
 /* Button Hover Effect */
@@ -100,7 +103,13 @@ button:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
-/* Base styles for responsive elements (hidden on desktop) */
+/*
+ * Base styles for responsive elements (hidden on desktop)
+ * Note: !important declarations in media queries below are necessary
+ * to override inline styles applied by React components via the style prop.
+ * This is the standard pattern for responsive overrides when components
+ * use JavaScript-generated inline styles.
+ */
 .mobile-menu-btn {
   display: none;
 }

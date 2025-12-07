@@ -356,38 +356,7 @@ export const styles = {
     color: COLORS.textMuted,
   },
 
-  // Buttons
-  processButton: {
-    width: '100%',
-    padding: '18px 24px',
-    fontSize: '16px',
-    fontWeight: '600',
-    color: COLORS.white,
-    backgroundColor: COLORS.primary,
-    border: 'none',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '12px',
-    boxShadow: '0 4px 12px rgba(10, 37, 64, 0.2)',
-  },
-  processButtonDisabled: {
-    backgroundColor: COLORS.border,
-    color: COLORS.textMuted,
-    cursor: 'not-allowed',
-    boxShadow: 'none',
-  },
-  spinner: {
-    width: '20px',
-    height: '20px',
-    border: '3px solid rgba(255,255,255,0.3)',
-    borderTopColor: COLORS.white,
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-  },
+  // Note: processButton styles are now in App.css (.process-button class)
 
   // Output
   outputHeader: {

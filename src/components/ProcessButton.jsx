@@ -4,7 +4,6 @@
 // ============================================
 
 import React, { memo } from 'react';
-import { styles } from '../styles/appStyles.js';
 
 /**
  * Process step execution button
@@ -24,14 +23,10 @@ const ProcessButtonComponent = ({
       disabled={isDisabled}
       aria-busy={isProcessing}
       aria-label={isProcessing ? `Processing Step ${currentStep}` : `Execute Step ${currentStep}: ${stepName}`}
-      style={{
-        ...styles.processButton,
-        ...(isDisabled ? styles.processButtonDisabled : {}),
-      }}
     >
       {isProcessing ? (
         <>
-          <div style={styles.spinner} aria-hidden="true" />
+          <div className="spinner" aria-hidden="true" />
           Processing Step {currentStep}...
         </>
       ) : (
