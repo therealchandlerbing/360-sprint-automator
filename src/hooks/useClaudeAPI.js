@@ -10,7 +10,7 @@ const CONFIG = {
   maxRetries: 4,
   baseDelay: 2000, // 2 seconds for standard errors
   timeoutBaseDelay: 8000, // 8 seconds for 504 timeout errors
-  rateLimitBaseDelay: 4000, // 4 seconds for rate limit errors (429)
+  rateLimitBaseDelay: 15000, // 15 seconds for rate limit errors (429) - aggressive backoff
   clientTimeout: 300000, // 5 minutes client-side timeout (matches Vercel maxDuration)
 };
 
