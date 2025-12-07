@@ -47,6 +47,7 @@ const INITIAL_DASHBOARD_STATE = {
  * @param {string} params.inputContent - User input content
  * @param {function} params.callClaudeAPI - Claude API call function
  * @param {function} params.setError - Error state setter from parent
+ * @param {object} params.toast - Optional toast notification object { success, error, info }
  * @returns {object} Express assessment state and handlers
  */
 export function useExpressAssessment({ projectName, inputContent, callClaudeAPI, setError }) {
