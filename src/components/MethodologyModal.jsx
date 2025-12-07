@@ -70,6 +70,10 @@ const MethodologyModalComponent = ({ isOpen, onClose }) => {
       const focusableElements = modalRef.current.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
+
+      // Guard against empty focusable elements
+      if (focusableElements.length === 0) return;
+
       const firstElement = focusableElements[0];
       const lastElement = focusableElements[focusableElements.length - 1];
 
@@ -109,7 +113,10 @@ const MethodologyModalComponent = ({ isOpen, onClose }) => {
       clearTimeout(timerId);
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow;
-      previousActiveElement.current?.focus();
+      // Only restore focus if element is still in the DOM
+      if (previousActiveElement.current && document.contains(previousActiveElement.current)) {
+        previousActiveElement.current.focus();
+      }
     };
   }, [isOpen, handleKeyDown]);
 
@@ -257,7 +264,7 @@ const MethodologyModalComponent = ({ isOpen, onClose }) => {
             <div style={{ fontSize: '14px', fontWeight: '600', color: COLORS.textPrimary, marginBottom: '12px' }}>
               Decision Framework:
             </div>
-            <div style={styles.decisionGrid}>
+            <div className="decision-grid" style={styles.decisionGrid}>
               <div style={{ ...styles.decisionCard, backgroundColor: '#D1FAE5' }}>
                 <div style={{ ...styles.decisionLabel, color: '#059669' }}>GO</div>
                 <div style={{ ...styles.decisionDesc, color: '#065F46' }}>
@@ -278,7 +285,7 @@ const MethodologyModalComponent = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            <div style={styles.maturityStages}>
+            <div className="maturity-stages" style={styles.maturityStages}>
               <span style={styles.maturityStage}>IDEA</span>
               <span style={styles.maturityArrow}>→</span>
               <span style={styles.maturityStage}>PROOF</span>

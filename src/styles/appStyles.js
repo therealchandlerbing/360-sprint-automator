@@ -1077,5 +1077,16 @@ export const responsiveStyles = `
       padding: 14px 16px !important;
       font-size: 14px !important;
     }
+    /* Modal responsive styles for small screens */
+    .decision-grid {
+      grid-template-columns: 1fr;
+    }
+    .maturity-stages {
+      font-size: 11px;
+      gap: 4px;
+      padding: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
   }
 `;
