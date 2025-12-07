@@ -12,6 +12,8 @@ export const config = {
 };
 
 const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+const API_TIMEOUT_SECONDS = 270;
+const API_TIMEOUT_MS = API_TIMEOUT_SECONDS * 1000;
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -47,9 +49,9 @@ export default async function handler(req, res) {
       : 16000; // Increased to handle Express Mode (all 13 steps in one response)
 
     // Call Claude API with timeout to prevent hanging requests
-    // Use 270s timeout to stay within maxDuration (300s) with buffer for response processing
+    // Use timeout with buffer to stay within maxDuration (300s)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 270000);
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
     let response;
     try {
@@ -71,10 +73,10 @@ export default async function handler(req, res) {
     } catch (fetchError) {
       clearTimeout(timeoutId);
       if (fetchError.name === 'AbortError') {
-        console.error('Claude API request timed out after 270s');
+        console.error(`Claude API request timed out after ${API_TIMEOUT_SECONDS}s`);
         return res.status(504).json({
           error: 'Request timed out. The AI is processing a complex request. Please try again.',
-          details: { timeout: true, duration: '270s' },
+          details: { timeout: true, duration: `${API_TIMEOUT_SECONDS}s` },
         });
       }
       throw fetchError;
