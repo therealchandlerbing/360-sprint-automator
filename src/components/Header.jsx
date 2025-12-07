@@ -1,11 +1,36 @@
 // ============================================
 // Header Component
 // Top header with logo, title, and progress
+// Enhanced logo with gradient and hover effect
 // ============================================
 
 import React, { memo, useState, useRef, useEffect } from 'react';
 import { STEPS } from '../constants/steps.js';
 import { styles } from '../styles/appStyles.js';
+
+// Enhanced logo styles
+const logoStyles = {
+  base: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    boxShadow: '0 2px 8px rgba(13, 148, 136, 0.3)',
+    transition: 'all 0.2s ease',
+    cursor: 'default',
+    flexShrink: 0,
+  },
+  hover: {
+    transform: 'scale(1.05)',
+    boxShadow: '0 4px 12px rgba(13, 148, 136, 0.4)',
+  },
+};
 
 /**
  * Application header with branding, waffle menu, and progress indicator
@@ -17,6 +42,7 @@ const HeaderComponent = ({
   onToggleMobileMenu,
 }) => {
   const [isWaffleMenuOpen, setIsWaffleMenuOpen] = useState(false);
+  const [logoHovered, setLogoHovered] = useState(false);
   const waffleMenuRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -90,7 +116,18 @@ const HeaderComponent = ({
               </div>
             )}
           </div>
-          <div className="logo" style={styles.logo} aria-hidden="true">V</div>
+          <div
+            className="logo"
+            style={{
+              ...logoStyles.base,
+              ...(logoHovered ? logoStyles.hover : {}),
+            }}
+            onMouseEnter={() => setLogoHovered(true)}
+            onMouseLeave={() => setLogoHovered(false)}
+            aria-hidden="true"
+          >
+            V
+          </div>
           <div>
             <h1 className="header-title" style={styles.headerTitle}>VIANEO Sprint Automator</h1>
             <p className="header-subtitle" style={styles.headerSubtitle}>Evidence-Based Business Validation</p>
