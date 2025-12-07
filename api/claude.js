@@ -11,6 +11,8 @@ export const config = {
   maxDuration: 300, // Allow up to 5 minutes for Claude API responses (complex prompts need more time)
 };
 
+const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-5-20250929';
+
 export default async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
@@ -39,7 +41,7 @@ export default async function handler(req, res) {
     }
 
     // Server-controlled configuration (from environment variables)
-    const modelName = process.env.CLAUDE_MODEL || 'claude-sonnet-4-5-20250929';
+    const modelName = process.env.CLAUDE_MODEL || DEFAULT_CLAUDE_MODEL;
     const maxTokens = process.env.CLAUDE_MAX_TOKENS
       ? parseInt(process.env.CLAUDE_MAX_TOKENS, 10)
       : 16000; // Increased to handle Express Mode (all 13 steps in one response)
