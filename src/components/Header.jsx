@@ -13,9 +13,8 @@ import { styles } from '../styles/appStyles.js';
  */
 const HeaderComponent = ({
   completedSteps,
-  isMobileMenuOpen,
-  onToggleMobileMenu,
   onOpenMethodology,
+  onToggleMobileMenu,
 }) => {
   const [isWaffleMenuOpen, setIsWaffleMenuOpen] = useState(false);
   const waffleMenuRef = useRef(null);
@@ -40,6 +39,12 @@ const HeaderComponent = ({
     setIsWaffleMenuOpen(false);
     onOpenMethodology();
   };
+
+  const handleNavigationClick = () => {
+    setIsWaffleMenuOpen(false);
+    onToggleMobileMenu();
+  };
+
   const progressPercent = Math.round((completedSteps / STEPS.length) * 100);
 
   return (
@@ -67,6 +72,14 @@ const HeaderComponent = ({
                 aria-label="Application menu"
               >
                 <button
+                  className="waffle-dropdown-item mobile-only"
+                  onClick={handleNavigationClick}
+                  role="menuitem"
+                >
+                  <span className="waffle-dropdown-icon" aria-hidden="true">☰</span>
+                  <span>Navigation</span>
+                </button>
+                <button
                   className="waffle-dropdown-item"
                   onClick={handleMethodologyClick}
                   role="menuitem"
@@ -77,19 +90,6 @@ const HeaderComponent = ({
               </div>
             )}
           </div>
-          {/* Mobile Menu Button (for sidebar toggle on mobile) */}
-          <button
-            className="mobile-menu-btn"
-            onClick={onToggleMobileMenu}
-            aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            aria-expanded={isMobileMenuOpen}
-            aria-controls="navigation-sidebar"
-            style={styles.mobileMenuButton}
-          >
-            <span style={styles.mobileMenuIcon} aria-hidden="true">
-              {isMobileMenuOpen ? '✕' : '☰'}
-            </span>
-          </button>
           <div className="logo" style={styles.logo} aria-hidden="true">V</div>
           <div>
             <h1 className="header-title" style={styles.headerTitle}>VIANEO Sprint Automator</h1>

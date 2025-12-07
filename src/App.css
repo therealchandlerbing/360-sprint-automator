@@ -212,7 +212,7 @@ button:focus-visible {
  * This is the standard pattern for responsive overrides when components
  * use JavaScript-generated inline styles.
  */
-.mobile-menu-btn {
+.mobile-only {
   display: none;
 }
 
@@ -235,7 +235,7 @@ button:focus-visible {
 
 /* Mobile Responsive Styles - Tablet and below */
 @media (max-width: 768px) {
-  .mobile-menu-btn {
+  .mobile-only {
     display: flex;
   }
 

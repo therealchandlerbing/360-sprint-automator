@@ -467,24 +467,6 @@ export const styles = {
     cursor: 'not-allowed',
   },
 
-  // Mobile menu button
-  mobileMenuButton: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '40px',
-    height: '40px',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    marginRight: '8px',
-  },
-  mobileMenuIcon: {
-    color: COLORS.white,
-    fontSize: '20px',
-  },
-
   // Session management buttons
   sessionSection: {
     padding: '20px 16px',
