@@ -38,7 +38,7 @@ const isNetworkError = (err) => {
     'aborted',
   ];
 
-  const errorMessage = err.message.toLowerCase();
+  const errorMessage = (err.message || '').toLowerCase();
   return networkErrorPatterns.some(pattern => errorMessage.includes(pattern));
 };
 
@@ -64,6 +64,12 @@ export const useClaudeAPI = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), clientTimeout);
 
+      // Helper to clean up timeout and calculate duration
+      const endRequest = () => {
+        clearTimeout(timeoutId);
+        return ((Date.now() - requestStartTime) / 1000).toFixed(1);
+      };
+
       try {
         const response = await fetch("/api/claude", {
           method: "POST",
@@ -75,8 +81,7 @@ export const useClaudeAPI = () => {
           signal: controller.signal,
         });
 
-        clearTimeout(timeoutId);
-        const requestDuration = ((Date.now() - requestStartTime) / 1000).toFixed(1);
+        const requestDuration = endRequest();
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -110,8 +115,7 @@ export const useClaudeAPI = () => {
 
         return await response.json();
       } catch (err) {
-        clearTimeout(timeoutId);
-        const requestDuration = ((Date.now() - requestStartTime) / 1000).toFixed(1);
+        const requestDuration = endRequest();
 
         if (attempt === maxRetries) {
           throw err;
