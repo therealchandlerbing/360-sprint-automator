@@ -150,6 +150,61 @@ button:focus-visible {
   color: #1A202C;
 }
 
+/* Waffle Menu - Always visible */
+.waffle-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-right: 12px;
+}
+
+.waffle-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.waffle-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: var(--color-white);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.waffle-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-primary);
+  transition: background 0.15s ease;
+  text-align: left;
+}
+
+.waffle-dropdown-item:hover {
+  background: var(--color-background);
+}
+
+.waffle-dropdown-icon {
+  font-size: 16px;
+  color: var(--color-primary-accent);
+}
+
 /*
  * Base styles for responsive elements (hidden on desktop)
  * Note: !important declarations in media queries below are necessary
