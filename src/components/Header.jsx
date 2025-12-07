@@ -3,27 +3,81 @@
 // Top header with logo, title, and progress
 // ============================================
 
-import React, { memo } from 'react';
-import { COLORS } from '../constants/colors.js';
+import React, { memo, useState, useRef, useEffect } from 'react';
 import { STEPS } from '../constants/steps.js';
 import { styles } from '../styles/appStyles.js';
 
 /**
- * Application header with branding and progress indicator
+ * Application header with branding, waffle menu, and progress indicator
  * Memoized to prevent re-renders when input content changes
  */
 const HeaderComponent = ({
   completedSteps,
   isMobileMenuOpen,
   onToggleMobileMenu,
+  onOpenMethodology,
 }) => {
+  const [isWaffleMenuOpen, setIsWaffleMenuOpen] = useState(false);
+  const waffleMenuRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (waffleMenuRef.current && !waffleMenuRef.current.contains(event.target)) {
+        setIsWaffleMenuOpen(false);
+      }
+    };
+
+    if (isWaffleMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isWaffleMenuOpen]);
+
+  const handleMethodologyClick = () => {
+    setIsWaffleMenuOpen(false);
+    onOpenMethodology();
+  };
   const progressPercent = Math.round((completedSteps / STEPS.length) * 100);
 
   return (
     <header style={styles.header} role="banner">
       <div className="header-inner" style={styles.headerInner}>
         <div style={styles.logoSection}>
-          {/* Mobile Menu Button */}
+          {/* Waffle Menu Button with Dropdown */}
+          <div className="waffle-menu-container" ref={waffleMenuRef} style={{ position: 'relative' }}>
+            <button
+              className="waffle-menu-btn"
+              onClick={() => setIsWaffleMenuOpen(!isWaffleMenuOpen)}
+              aria-label={isWaffleMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isWaffleMenuOpen}
+              aria-haspopup="true"
+            >
+              <span style={{ fontSize: '20px', color: '#FFFFFF' }} aria-hidden="true">
+                {isWaffleMenuOpen ? '✕' : '☰'}
+              </span>
+            </button>
+            {/* Waffle Dropdown Menu */}
+            {isWaffleMenuOpen && (
+              <div
+                className="waffle-dropdown"
+                role="menu"
+                aria-label="Application menu"
+              >
+                <button
+                  className="waffle-dropdown-item"
+                  onClick={handleMethodologyClick}
+                  role="menuitem"
+                >
+                  <span className="waffle-dropdown-icon" aria-hidden="true">ⓘ</span>
+                  <span>Methodology</span>
+                </button>
+              </div>
+            )}
+          </div>
+          {/* Mobile Menu Button (for sidebar toggle on mobile) */}
           <button
             className="mobile-menu-btn"
             onClick={onToggleMobileMenu}
