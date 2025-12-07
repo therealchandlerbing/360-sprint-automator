@@ -18,9 +18,9 @@ export const useClaudeAPI = () => {
    * @returns {Promise<Object>} API response
    */
   const callClaudeAPI = useCallback(async (systemPrompt, userPrompt, addLog) => {
-    const maxRetries = 3;
+    const maxRetries = 4; // Increased from 3 for better resilience against 504 errors
     const baseDelay = 2000; // 2 seconds
-    const timeoutBaseDelay = 5000; // 5 seconds for timeout errors (504)
+    const timeoutBaseDelay = 8000; // 8 seconds for timeout errors (504) - increased for API recovery time
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -43,12 +43,18 @@ export const useClaudeAPI = () => {
             const delay = response.status === 504
               ? timeoutBaseDelay * Math.pow(2, attempt)
               : baseDelay * Math.pow(2, attempt);
-            addLog?.(`${errorMessage} - will retry after ${delay/1000}s...`);
+            const retryNum = attempt + 1;
+            addLog?.(`${errorMessage} - retry ${retryNum}/${maxRetries} after ${delay/1000}s...`);
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
 
           throw new Error(errorMessage);
+        }
+
+        // Log success after retry
+        if (attempt > 0) {
+          addLog?.(`Request succeeded after ${attempt} ${attempt === 1 ? 'retry' : 'retries'}`);
         }
 
         return await response.json();
@@ -59,7 +65,8 @@ export const useClaudeAPI = () => {
         // Network errors - retry with standard delay
         if (err.name === 'TypeError' || err.message.includes('fetch')) {
           const delay = baseDelay * Math.pow(2, attempt);
-          addLog?.(`Network error - will retry after ${delay/1000}s...`);
+          const retryNum = attempt + 1;
+          addLog?.(`Network error - retry ${retryNum}/${maxRetries} after ${delay/1000}s...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
