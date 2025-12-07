@@ -122,6 +122,7 @@ export const styles = {
     padding: '12px',
     maxHeight: 'calc(100vh - 280px)',
     overflowY: 'auto',
+    overflowX: 'hidden',
   },
   phaseGroup: {
     marginBottom: '16px',
