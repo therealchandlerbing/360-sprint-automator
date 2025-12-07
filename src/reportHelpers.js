@@ -419,7 +419,7 @@ export function createTableCell(content, options = {}) {
             text: content != null ? String(content) : '',
             bold,
             size,
-            color: bold && !shading ? REPORT_COLORS.white : color,
+            color: color,
             font: 'Arial',
           }),
         ],
@@ -534,7 +534,7 @@ export function createScoreTable(headers, rows, options = {}) {
  * Create a simple key-value info table
  */
 export function createInfoTable(data, options = {}) {
-  const { phase = 'Foundation', labelWidth = 2500 } = options;
+  const { labelWidth = 2500 } = options;
 
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -625,27 +625,36 @@ export function createChartImage(base64Data, width, height, altText = 'Chart') {
 // ============================================
 
 /**
+ * Generate a unique report sequence number based on timestamp
+ * Uses last 4 digits of timestamp for uniqueness
+ */
+function generateSequenceNumber() {
+  const timestamp = Date.now();
+  return String(timestamp % 10000).padStart(4, '0');
+}
+
+/**
  * Generate a safe filename from project name
  */
 export function generateReportFilename(projectName, date) {
   const year = new Date(date || Date.now()).getFullYear();
-  const reportNumber = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
+  const sequenceNumber = generateSequenceNumber();
   const safeName = (projectName || 'Assessment')
     .replace(/[^a-zA-Z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .substring(0, 30);
   const dateStr = (date || new Date().toISOString().split('T')[0]).replace(/-/g, '');
 
-  return `360-BVR-${year}-${reportNumber}-${safeName}-${dateStr}.docx`;
+  return `360-BVR-${year}-${sequenceNumber}-${safeName}-${dateStr}.docx`;
 }
 
 /**
- * Generate a report ID
+ * Generate a report ID using timestamp for uniqueness
  */
 export function generateReportId(date) {
   const year = new Date(date || Date.now()).getFullYear();
-  const reportNumber = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
-  return `360-BVR-${year}-${reportNumber}`;
+  const sequenceNumber = generateSequenceNumber();
+  return `360-BVR-${year}-${sequenceNumber}`;
 }
 
 // ============================================

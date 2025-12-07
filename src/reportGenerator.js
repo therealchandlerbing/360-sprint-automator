@@ -11,12 +11,10 @@ import {
   TextRun,
   Table,
   TableRow,
-  TableCell,
   TableOfContents,
   Header,
   Footer,
   PageNumber,
-  PageBreak,
   AlignmentType,
   HeadingLevel,
   BorderStyle,
@@ -32,26 +30,17 @@ import {
   TYPOGRAPHY,
   SPACING,
   TABLE_WIDTHS,
-  DIMENSION_CONFIG,
-  getPhaseColor,
   getStatusBadge,
-  getThresholdStatus,
 } from './reportStyles.js';
 
 import {
-  createTextRun,
   createParagraph,
-  createDocumentTitle,
   createSectionHeader,
   createSubsectionHeader,
   createH3Header,
   createPageBreak,
   createSpacer,
-  createEvidenceMarker,
   createParagraphWithEvidence,
-  createScoreBadgeRun,
-  createStatusBadgeRun,
-  createThresholdIndicator,
   createRecommendationBadge,
   createScoreTable,
   createInfoTable,
@@ -65,7 +54,6 @@ import {
   formatScore,
   formatPercentage,
   truncateText,
-  TABLE_BORDERS,
 } from './reportHelpers.js';
 
 import { generateAllCharts } from './reportCharts.js';
@@ -438,7 +426,7 @@ function createExecutiveBriefSection(data) {
   const projectInfo = [
     { label: 'Project', value: brief.b1_overview?.companyName || data.projectName || 'N/A' },
     { label: 'Date', value: data.date || new Date().toISOString().split('T')[0] },
-    { label: 'Brief ID', value: `EB-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}` },
+    { label: 'Brief ID', value: `EB-${new Date().getFullYear()}-${String(Date.now() % 1000).padStart(3, '0')}` },
     { label: 'Evaluator', value: 'VIANEO Sprint Automator' },
   ];
   sections.push(createInfoTable(projectInfo));
@@ -653,7 +641,6 @@ function createMarketMaturitySection(data, charts) {
     const d = mm[dim.key] || {};
     const score = d.score ?? mm[dim.key] ?? 0;
     const threshold = d.threshold ?? dim.threshold;
-    const status = getThresholdStatus(score, threshold);
     const meetsThreshold = score >= threshold;
 
     return [
