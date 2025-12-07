@@ -20,6 +20,7 @@ export const useClaudeAPI = () => {
   const callClaudeAPI = useCallback(async (systemPrompt, userPrompt, addLog) => {
     const maxRetries = 3;
     const baseDelay = 2000; // 2 seconds
+    const timeoutBaseDelay = 5000; // 5 seconds for timeout errors (504)
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -44,7 +45,14 @@ export const useClaudeAPI = () => {
 
           // Retry on rate limit (429) or server errors (5xx)
           if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) {
-            addLog?.(`${errorMessage} - will retry...`);
+            // Use longer delay for timeout errors (504)
+            if (response.status === 504) {
+              const timeoutDelay = timeoutBaseDelay * Math.pow(2, attempt);
+              addLog?.(`${errorMessage} - will retry after ${timeoutDelay/1000}s...`);
+              await new Promise(resolve => setTimeout(resolve, timeoutDelay));
+            } else {
+              addLog?.(`${errorMessage} - will retry...`);
+            }
             continue;
           }
 
