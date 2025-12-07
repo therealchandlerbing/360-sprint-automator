@@ -316,7 +316,7 @@ export const styles = {
   removeButton: {
     width: '24px',
     height: '24px',
-    backgroundColor: '#FEE2E2',
+    backgroundColor: COLORS.errorLightAlt,
     color: COLORS.error,
     border: 'none',
     borderRadius: '50%',
@@ -395,24 +395,24 @@ export const styles = {
   logContainer: {
     marginTop: '16px',
     padding: '16px',
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.logBackground,
     borderRadius: '10px',
     fontFamily: '"SF Mono", "Menlo", "Monaco", monospace',
     fontSize: '13px',
   },
   logEntry: {
-    color: '#94A3B8',
+    color: COLORS.logText,
     marginBottom: '4px',
   },
   logTime: {
-    color: '#64748B',
+    color: COLORS.logTimestamp,
   },
 
   // Error
   errorBox: {
     padding: '16px 20px',
-    backgroundColor: '#FEF2F2',
-    border: `1px solid #FECACA`,
+    backgroundColor: COLORS.errorLight,
+    border: `1px solid ${COLORS.errorBorder}`,
     borderRadius: '10px',
     marginBottom: '24px',
     display: 'flex',
@@ -511,9 +511,9 @@ export const styles = {
     padding: '12px 10px',
     fontSize: '13px',
     fontWeight: '600',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: COLORS.errorLight,
     color: COLORS.error,
-    border: '1px solid #FECACA',
+    border: `1px solid ${COLORS.errorBorder}`,
     borderRadius: '8px',
     cursor: 'pointer',
   },
@@ -705,7 +705,7 @@ export const styles = {
     marginTop: '16px',
   },
   modalCalloutEmphasis: {
-    backgroundColor: '#FEF3CD',
+    backgroundColor: COLORS.warningLight,
     padding: '16px 20px',
     borderRadius: '8px',
     fontSize: '14px',
@@ -934,7 +934,7 @@ export const responsiveStyles = `
   }
   .methodology-trigger:hover {
     background-color: rgba(255,255,255,0.2);
-    color: #FFFFFF;
+    color: ${COLORS.white};
   }
   .methodology-trigger-icon {
     font-size: 16px;
