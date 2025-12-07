@@ -362,9 +362,9 @@ Examples:
 │  React 19 + Vite 7                                                  │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                 │
 │  │ Components  │  │   Hooks     │  │   Utils     │                 │
-│  │ - App       │  │ - Claude API│  │ - File Parse│                 │
-│  │ - Sidebar   │  │ - Session   │  │ - DOCX Gen  │                 │
-│  │ - Express   │  │ - Express   │  │ - Dashboard │                 │
+│  │ - App       │  │ - useClaude │  │ - fileParser│                 │
+│  │ - Sidebar   │  │ - useSession│  │ - docxGen   │                 │
+│  │ - Express   │  │ - useExpress│  │ - dashGen   │                 │
 │  └─────────────┘  └─────────────┘  └─────────────┘                 │
 │         │                │                                          │
 │         └────────────────┼──────────────────────────────────────────┤
@@ -427,12 +427,14 @@ Examples:
 │   ├── components/            # React UI components
 │   │   ├── Header.jsx         # App header with progress
 │   │   ├── Sidebar.jsx        # Step navigation and actions
+│   │   ├── StepHeader.jsx     # Step title and description
 │   │   ├── InputSection.jsx   # File upload and text input
 │   │   ├── OutputDisplay.jsx  # Rendered markdown output
 │   │   ├── ProcessButton.jsx  # Step execution trigger
 │   │   ├── ProcessingLog.jsx  # Real-time API logs
 │   │   ├── Navigation.jsx     # Previous/Next controls
 │   │   ├── BranchSelector.jsx # Organization branch picker
+│   │   ├── ErrorBox.jsx       # Error message display
 │   │   ├── ExpressModeSelector.jsx    # Mode selection UI
 │   │   ├── ExpressProcessing.jsx      # Progress display
 │   │   └── ExpressCompletion.jsx      # Results & downloads
