@@ -336,6 +336,8 @@ export function useExpressAssessment({ projectName, inputContent, callClaudeAPI,
     setDashboard(INITIAL_DASHBOARD_STATE);
     setError(null);
 
+    let progressInterval;
+
     try {
       // Get the Express V2 prompts
       const { systemPrompt, userPrompt } = getExpressV2Prompts(formData);
@@ -351,7 +353,7 @@ export function useExpressAssessment({ projectName, inputContent, callClaudeAPI,
       ];
 
       let currentStage = 0;
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         if (abortRef.current || currentStage >= V2_PROGRESS_STAGES.length) {
           clearInterval(progressInterval);
           return;
@@ -426,6 +428,9 @@ export function useExpressAssessment({ projectName, inputContent, callClaudeAPI,
       }));
 
     } catch (err) {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
       console.error('Express V2 assessment error:', err);
       setExpressAssessment(prev => ({
         ...prev,

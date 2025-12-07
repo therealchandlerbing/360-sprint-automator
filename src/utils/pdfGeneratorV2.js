@@ -4,40 +4,22 @@
 // ============================================
 
 import { DIMENSIONS, getGateRecommendation, calculateOverallScore } from '../constants/expressPromptV2.js';
+import { sanitizeProjectName } from './formatUtils.js';
 
 /**
- * Generate mini radar chart SVG for cover page
+ * Escape HTML to prevent XSS attacks
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text safe for HTML insertion
  */
-function generateMiniRadar(scores, size = 120) {
-  const center = size / 2;
-  const maxRadius = size / 2 - 20;
-  const angleStep = (2 * Math.PI) / DIMENSIONS.length;
-  const startAngle = -Math.PI / 2;
-
-  const getPoint = (index, value) => {
-    const angle = startAngle + index * angleStep;
-    const radius = (value / 5) * maxRadius;
-    return {
-      x: center + radius * Math.cos(angle),
-      y: center + radius * Math.sin(angle)
-    };
-  };
-
-  const dataPoints = DIMENSIONS.map((dim, i) => {
-    const point = getPoint(i, scores[dim.id] || 0);
-    return `${point.x},${point.y}`;
-  }).join(' ');
-
-  return `
-    <svg width="${size}" height="${size}">
-      <polygon points="${dataPoints}" fill="rgba(59, 130, 246, 0.2)" stroke="#3B82F6" stroke-width="2" />
-      ${DIMENSIONS.map((dim, i) => {
-        const point = getPoint(i, scores[dim.id] || 0);
-        return `<circle cx="${point.x}" cy="${point.y}" r="4" fill="${dim.color}" />`;
-      }).join('')}
-    </svg>
-  `;
-}
+const escapeHtml = (text) => {
+  if (text == null) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
 
 /**
  * Generate dimension page HTML
@@ -56,7 +38,7 @@ function generateDimensionPage(dimension, data, pageNumber, totalPages) {
       <div class="page-header">
         <div class="page-header-left">
           <div class="logo-small">🎯</div>
-          <span class="company-name">${data.companyName || 'Assessment'}</span>
+          <span class="company-name">${escapeHtml(data.companyName) || 'Assessment'}</span>
         </div>
         <div class="page-header-right">
           <span class="page-number">Page ${pageNumber} of ${totalPages}</span>
@@ -130,19 +112,19 @@ function generateDimensionPage(dimension, data, pageNumber, totalPages) {
         <div class="analysis-column strengths">
           <h4 class="column-title"><span class="column-icon">✓</span> Strengths</h4>
           <ul class="analysis-list">
-            ${(analysis.strengths || []).map(s => `<li>${s}</li>`).join('')}
+            ${(analysis.strengths || []).map(s => `<li>${escapeHtml(s)}</li>`).join('')}
           </ul>
         </div>
         <div class="analysis-column risks">
           <h4 class="column-title"><span class="column-icon">⚠</span> Risks</h4>
           <ul class="analysis-list">
-            ${(analysis.risks || []).map(r => `<li>${r}</li>`).join('')}
+            ${(analysis.risks || []).map(r => `<li>${escapeHtml(r)}</li>`).join('')}
           </ul>
         </div>
         <div class="analysis-column recommendations">
           <h4 class="column-title"><span class="column-icon">→</span> Actions</h4>
           <ul class="analysis-list">
-            ${(analysis.recommendations || []).map(r => `<li>${r}</li>`).join('')}
+            ${(analysis.recommendations || []).map(r => `<li>${escapeHtml(r)}</li>`).join('')}
           </ul>
         </div>
       </div>
@@ -153,15 +135,15 @@ function generateDimensionPage(dimension, data, pageNumber, totalPages) {
         <div class="timeline-grid">
           <div class="timeline-item t30">
             <div class="timeline-label">30 Days</div>
-            <p class="timeline-content">${analysis.timeline['30day'] || ''}</p>
+            <p class="timeline-content">${escapeHtml(analysis.timeline['30day']) || ''}</p>
           </div>
           <div class="timeline-item t60">
             <div class="timeline-label">60 Days</div>
-            <p class="timeline-content">${analysis.timeline['60day'] || ''}</p>
+            <p class="timeline-content">${escapeHtml(analysis.timeline['60day']) || ''}</p>
           </div>
           <div class="timeline-item t90">
             <div class="timeline-label">90 Days</div>
-            <p class="timeline-content">${analysis.timeline['90day'] || ''}</p>
+            <p class="timeline-content">${escapeHtml(analysis.timeline['90day']) || ''}</p>
           </div>
         </div>
       </div>
@@ -172,14 +154,14 @@ function generateDimensionPage(dimension, data, pageNumber, totalPages) {
         <div class="metrics-section">
           <h4 class="mini-title">📊 Key Metrics to Track</h4>
           <ul class="metrics-list">
-            ${(analysis.keyMetrics || []).map(m => `<li>${m}</li>`).join('')}
+            ${(analysis.keyMetrics || []).map(m => `<li>${escapeHtml(m)}</li>`).join('')}
           </ul>
         </div>
         ` : ''}
         ${analysis.competitivePosition ? `
         <div class="competitive-section">
           <h4 class="mini-title">🎯 Competitive Position</h4>
-          <p class="competitive-text">${analysis.competitivePosition}</p>
+          <p class="competitive-text">${escapeHtml(analysis.competitivePosition)}</p>
         </div>
         ` : ''}
       </div>
@@ -203,7 +185,7 @@ function generateCrossDimensionalPage(data, pageNumber, totalPages) {
       <div class="page-header">
         <div class="page-header-left">
           <div class="logo-small">🎯</div>
-          <span class="company-name">${data.companyName || 'Assessment'}</span>
+          <span class="company-name">${escapeHtml(data.companyName) || 'Assessment'}</span>
         </div>
         <div class="page-header-right">
           <span class="page-number">Page ${pageNumber} of ${totalPages}</span>
@@ -222,15 +204,15 @@ function generateCrossDimensionalPage(data, pageNumber, totalPages) {
 
       ${crossAnalysis.bottleneck ? `
       <div class="bottleneck-section">
-        <h3 class="section-title-alert">⚠ Critical Bottleneck: ${DIMENSIONS.find(d => d.id === crossAnalysis.bottleneck.dimension)?.name || crossAnalysis.bottleneck.dimension}</h3>
+        <h3 class="section-title-alert">⚠ Critical Bottleneck: ${DIMENSIONS.find(d => d.id === crossAnalysis.bottleneck.dimension)?.name || escapeHtml(crossAnalysis.bottleneck.dimension)}</h3>
         <div class="bottleneck-content">
           <div class="bottleneck-reason">
             <span class="bottleneck-label">Why:</span>
-            <p>${crossAnalysis.bottleneck.reason || ''}</p>
+            <p>${escapeHtml(crossAnalysis.bottleneck.reason) || ''}</p>
           </div>
           <div class="bottleneck-impact">
             <span class="bottleneck-label">Impact:</span>
-            <p>${crossAnalysis.bottleneck.impact || ''}</p>
+            <p>${escapeHtml(crossAnalysis.bottleneck.impact) || ''}</p>
           </div>
         </div>
       </div>
@@ -241,14 +223,14 @@ function generateCrossDimensionalPage(data, pageNumber, totalPages) {
           <h3 class="cross-column-title"><span class="cross-icon synergy-icon">⚡</span> Synergies</h3>
           <p class="cross-column-subtitle">Dimensions that reinforce each other</p>
           <ul class="cross-list">
-            ${(crossAnalysis.synergies || []).map(item => `<li class="synergy-item">${item}</li>`).join('')}
+            ${(crossAnalysis.synergies || []).map(item => `<li class="synergy-item">${escapeHtml(item)}</li>`).join('')}
           </ul>
         </div>
         <div class="cross-column tradeoffs">
           <h3 class="cross-column-title"><span class="cross-icon tradeoff-icon">⚖</span> Tradeoffs</h3>
           <p class="cross-column-subtitle">Dimensions in tension</p>
           <ul class="cross-list">
-            ${(crossAnalysis.tradeoffs || []).map(item => `<li class="tradeoff-item">${item}</li>`).join('')}
+            ${(crossAnalysis.tradeoffs || []).map(item => `<li class="tradeoff-item">${escapeHtml(item)}</li>`).join('')}
           </ul>
         </div>
       </div>
@@ -258,7 +240,7 @@ function generateCrossDimensionalPage(data, pageNumber, totalPages) {
         <div class="dependencies-grid">
           ${(crossAnalysis.criticalDependencies || []).map(dep => `
             <div class="dependency-card">
-              <p>${dep}</p>
+              <p>${escapeHtml(dep)}</p>
             </div>
           `).join('')}
         </div>
@@ -283,7 +265,6 @@ export function generateHTMLReport(assessmentData) {
     month: 'long',
     day: 'numeric'
   });
-  const confidenceLevel = assessmentData.confidenceLevel || 'Medium';
 
   const totalPages = DIMENSIONS.length + 2; // Cover + 5 dimensions + Cross-analysis
 
@@ -299,7 +280,7 @@ export function generateHTMLReport(assessmentData) {
 <!DOCTYPE html>
 <html>
 <head>
-  <title>360 Business Validation Report - ${assessmentData.companyName || 'Assessment'}</title>
+  <title>360 Business Validation Report - ${escapeHtml(assessmentData.companyName) || 'Assessment'}</title>
   <meta charset="UTF-8">
   <style>
     @page {
@@ -1186,7 +1167,7 @@ export function generateHTMLReport(assessmentData) {
       <h1 class="cover-title">VIANEO Framework<br/>Assessment Report</h1>
       <p class="cover-subtitle">Comprehensive Venture Evaluation</p>
 
-      <div class="cover-company">${assessmentData.companyName || 'Company Assessment'}</div>
+      <div class="cover-company">${escapeHtml(assessmentData.companyName) || 'Company Assessment'}</div>
       <div class="cover-date">${assessmentDate}</div>
 
       <div class="cover-score-section">
@@ -1197,9 +1178,6 @@ export function generateHTMLReport(assessmentData) {
             <div class="cover-gate-row">
               <div class="cover-gate" style="background: ${gate.bg}; color: ${gate.color};">
                 ${gate.label}
-              </div>
-              <div class="cover-confidence">
-                ${confidenceLevel} Confidence
               </div>
             </div>
           </div>
@@ -1217,7 +1195,7 @@ export function generateHTMLReport(assessmentData) {
 
         ${assessmentData.executiveSummary ? `
         <div class="cover-summary">
-          <p class="cover-summary-text">${assessmentData.executiveSummary}</p>
+          <p class="cover-summary-text">${escapeHtml(assessmentData.executiveSummary)}</p>
         </div>
         ` : ''}
 
@@ -1227,7 +1205,7 @@ export function generateHTMLReport(assessmentData) {
           <div class="cover-actions">
             <h4 class="cover-actions-title">⚡ Immediate Actions (30 Days)</h4>
             <ol class="cover-actions-list">
-              ${assessmentData.immediateActions.slice(0, 3).map(action => `<li>${action}</li>`).join('')}
+              ${assessmentData.immediateActions.slice(0, 3).map(action => `<li>${escapeHtml(action)}</li>`).join('')}
             </ol>
           </div>
           ` : ''}
@@ -1235,7 +1213,7 @@ export function generateHTMLReport(assessmentData) {
           <div class="cover-actions">
             <h4 class="cover-actions-title">✓ Top Strengths</h4>
             <ol class="cover-actions-list">
-              ${assessmentData.topStrengths.slice(0, 3).map(strength => `<li>${strength}</li>`).join('')}
+              ${assessmentData.topStrengths.slice(0, 3).map(strength => `<li>${escapeHtml(strength)}</li>`).join('')}
             </ol>
           </div>
           ` : ''}
@@ -1270,7 +1248,7 @@ export function downloadHTMLReport(assessmentData) {
 
   const link = document.createElement('a');
   link.href = url;
-  link.download = `360-Business-Validation-Report-${assessmentData.companyName || 'Assessment'}.html`;
+  link.download = `360-Business-Validation-Report-${sanitizeProjectName(assessmentData.companyName || 'Assessment')}.html`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

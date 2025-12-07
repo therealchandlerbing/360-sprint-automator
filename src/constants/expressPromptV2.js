@@ -219,13 +219,6 @@ Analyze how dimensions interact:
       "dimension": "dimension_id",
       "reason": "explanation",
       "impact": "impact statement"
-    },
-    "interactionMatrix": {
-      "legitimacy": { "legitimacy": 0, "desirability": 5, "acceptability": 3, "feasibility": 2, "viability": 4 },
-      "desirability": { "legitimacy": 4, "desirability": 0, "acceptability": 6, "feasibility": 3, "viability": 7 },
-      "acceptability": { "legitimacy": 2, "desirability": 5, "acceptability": 0, "feasibility": 4, "viability": 3 },
-      "feasibility": { "legitimacy": 3, "desirability": 4, "acceptability": 2, "feasibility": 0, "viability": 6 },
-      "viability": { "legitimacy": 5, "desirability": 8, "acceptability": 4, "feasibility": 7, "viability": 0 }
     }
   },
   "executiveSummary": "2-3 sentence overview",

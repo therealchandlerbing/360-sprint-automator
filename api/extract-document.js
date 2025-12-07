@@ -9,6 +9,8 @@ export const config = {
   maxDuration: 120, // 2 minutes for document extraction
 };
 
+const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+
 export default async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
@@ -141,8 +143,9 @@ If information for a field is not found, include the field with an empty string.
     }
 
     // Call Claude API
+    const modelName = process.env.CLAUDE_MODEL || DEFAULT_CLAUDE_MODEL;
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: modelName,
       max_tokens: 4000,
       messages: [
         {
