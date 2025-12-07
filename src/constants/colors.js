@@ -27,6 +27,7 @@ export const COLORS = {
   textPrimary: '#1A202C',
   textSecondary: '#4A5568',
   textMuted: '#718096',
+  textExtraMuted: '#A0AEC0',
   textOnDark: '#FFFFFF',
   textOnDarkMuted: 'rgba(255,255,255,0.8)',
 
