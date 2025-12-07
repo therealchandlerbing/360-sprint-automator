@@ -367,8 +367,9 @@ export function useExpressAssessment({ projectName, inputContent, callClaudeAPI,
         currentStage++;
       }, 3000); // Update every 3 seconds
 
-      // Call Claude API with Express V2 prompt (reduced max_tokens)
-      const data = await callClaudeAPI(systemPrompt, userPrompt, null, { maxTokens: 8000 });
+      // Call Claude API with Express V2 prompt
+      // Note: Uses default max_tokens (16000) from API endpoint, which is fine for V2
+      const data = await callClaudeAPI(systemPrompt, userPrompt, null);
 
       clearInterval(progressInterval);
 
