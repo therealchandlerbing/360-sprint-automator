@@ -1,12 +1,27 @@
 // ============================================
 // Input Section Component
 // File upload and text input for Step 0
+// Enhanced with drag-and-drop feedback
 // ============================================
 
 import React, { useRef, useState, memo } from 'react';
 import { COLORS } from '../constants/colors.js';
 import { styles } from '../styles/appStyles.js';
 import { parseFiles } from '../utils/fileParser.js';
+
+// File icon helper
+const getFileIcon = (filename) => {
+  const ext = filename.split('.').pop().toLowerCase();
+  const icons = { pdf: '📕', docx: '📘', doc: '📘', txt: '📄', md: '📝' };
+  return icons[ext] || '📄';
+};
+
+// Format file size helper
+const formatFileSize = (bytes) => {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
 
 /**
  * Input section with file upload and text area
@@ -24,6 +39,8 @@ const InputSectionComponent = ({
 }) => {
   const fileInputRef = useRef(null);
   const [isParsingFiles, setIsParsingFiles] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [removeHoveredIndex, setRemoveHoveredIndex] = useState(null);
 
   const handleFileChange = async (event) => {
     const files = Array.from(event.target.files);
@@ -51,6 +68,79 @@ const InputSectionComponent = ({
       // Reset input to allow re-uploading same file
       event.target.value = '';
     }
+  };
+
+  // Drag event handlers
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isParsingFiles) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (isParsingFiles) return;
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+
+    setIsParsingFiles(true);
+
+    try {
+      const { results, errors } = await parseFiles(files);
+
+      if (errors.length > 0 && onError) {
+        const errorMessages = errors.map(e => `${e.file}: ${e.error}`).join('\n');
+        onError(`Some files could not be parsed:\n${errorMessages}`);
+      }
+
+      if (results.length > 0) {
+        onFileUpload(results);
+      }
+    } catch (error) {
+      if (onError) {
+        onError(`Failed to parse files: ${error.message}`);
+      }
+    } finally {
+      setIsParsingFiles(false);
+    }
+  };
+
+  // Enhanced upload zone styles
+  const uploadZoneStyles = {
+    ...styles.uploadZone,
+    ...(isParsingFiles ? { opacity: 0.6, cursor: 'wait' } : {}),
+    ...(isDragging ? {
+      borderColor: '#14B8A6',
+      backgroundColor: 'rgba(20, 184, 166, 0.08)',
+      boxShadow: '0 0 0 3px rgba(20, 184, 166, 0.15)',
+    } : {}),
+  };
+
+  // Enhanced file item styles
+  const fileItemStyles = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 14px',
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #E2E8F0',
+    borderRadius: '8px',
+    marginBottom: '8px',
   };
 
   return (
@@ -92,29 +182,64 @@ const InputSectionComponent = ({
           className="upload-zone"
           onClick={() => !isParsingFiles && fileInputRef.current?.click()}
           onKeyDown={(e) => { if (!isParsingFiles && (e.key === 'Enter' || e.key === ' ')) fileInputRef.current?.click(); }}
-          style={{
-            ...styles.uploadZone,
-            ...(isParsingFiles ? { opacity: 0.6, cursor: 'wait' } : {}),
-          }}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          style={uploadZoneStyles}
           role="button"
           tabIndex={isParsingFiles ? -1 : 0}
           aria-label="Upload files: TXT, MD, PDF, DOCX supported"
           aria-busy={isParsingFiles}
         >
-          <div style={styles.uploadIcon} aria-hidden="true">{isParsingFiles ? '⏳' : '📄'}</div>
-          <div style={styles.uploadText}>{isParsingFiles ? 'Parsing files...' : 'Drop files or click to upload'}</div>
-          <div style={styles.uploadHint}>TXT, MD, PDF, DOCX supported</div>
+          <div style={{ fontSize: '36px', marginBottom: '12px' }} aria-hidden="true">
+            {isParsingFiles ? '⏳' : isDragging ? '📥' : '📄'}
+          </div>
+          <div style={{ fontSize: '15px', fontWeight: '500', color: '#4A5568', marginBottom: '4px' }}>
+            {isParsingFiles ? 'Parsing files...' : isDragging ? 'Drop files here' : 'Drop files or click to upload'}
+          </div>
+          <div style={{ fontSize: '13px', color: '#A0AEC0' }}>
+            Supports TXT, MD, PDF, DOCX
+          </div>
         </div>
 
         {uploadedFiles.length > 0 && (
-          <div style={{ marginTop: '16px' }} role="list" aria-label="Uploaded files">
+          <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }} role="list" aria-label="Uploaded files">
             {uploadedFiles.map((file, index) => (
-              <div key={`${file.name}-${file.lastModified || index}`} style={styles.fileItem} role="listitem">
-                <span style={styles.fileName}>{file.name}</span>
-                <span style={styles.fileSize}>{(file.size / 1024).toFixed(1)} KB</span>
+              <div key={`${file.name}-${file.lastModified || index}`} style={fileItemStyles} role="listitem">
+                <span style={{ fontSize: '22px', flexShrink: 0 }}>{getFileIcon(file.name)}</span>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#1A202C',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>{file.name}</span>
+                  <span style={{ fontSize: '12px', color: '#A0AEC0', marginTop: '2px' }}>
+                    {formatFileSize(file.size)}
+                  </span>
+                </div>
                 <button
-                  onClick={() => onRemoveFile(index)}
-                  style={styles.removeButton}
+                  onClick={(e) => { e.stopPropagation(); onRemoveFile(index); }}
+                  onMouseEnter={() => setRemoveHoveredIndex(index)}
+                  onMouseLeave={() => setRemoveHoveredIndex(null)}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: removeHoveredIndex === index ? '#FFF5F5' : 'transparent',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: removeHoveredIndex === index ? '#E53E3E' : '#A0AEC0',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    transition: 'all 0.15s ease',
+                    flexShrink: 0,
+                  }}
                   aria-label={`Remove file ${file.name}`}
                 >
                   ×

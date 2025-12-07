@@ -53,7 +53,7 @@ const ProcessButtonComponent = ({
         padding: '48px 32px',
       }}>
         <button
-          className="process-button"
+          className={`process-button ${isProcessing ? 'loading' : ''}`}
           onClick={onClick}
           disabled={isDisabled}
           aria-busy={isProcessing}
@@ -63,7 +63,7 @@ const ProcessButtonComponent = ({
           {isProcessing ? (
             <>
               <div className="spinner" aria-hidden="true" />
-              Processing Step {currentStep}...
+              <span>Executing Step {currentStep}...</span>
             </>
           ) : (
             `Execute Step ${currentStep}: ${stepName}`
@@ -87,7 +87,7 @@ const ProcessButtonComponent = ({
   // Standard layout for Step 0
   return (
     <button
-      className="process-button"
+      className={`process-button ${isProcessing ? 'loading' : ''}`}
       onClick={onClick}
       disabled={isDisabled}
       aria-busy={isProcessing}
@@ -96,7 +96,7 @@ const ProcessButtonComponent = ({
       {isProcessing ? (
         <>
           <div className="spinner" aria-hidden="true" />
-          Processing Step {currentStep}...
+          <span>Executing Step {currentStep}...</span>
         </>
       ) : (
         `Execute Step ${currentStep}: ${stepName}`
