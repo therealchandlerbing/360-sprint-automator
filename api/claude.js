@@ -11,7 +11,7 @@ export const config = {
   maxDuration: 300, // Allow up to 5 minutes for Claude API responses (complex prompts need more time)
 };
 
-const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-5-20250929';
+const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -46,21 +46,40 @@ export default async function handler(req, res) {
       ? parseInt(process.env.CLAUDE_MAX_TOKENS, 10)
       : 16000; // Increased to handle Express Mode (all 13 steps in one response)
 
-    // Call Claude API
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: modelName,
-        max_tokens: maxTokens,
-        system: system || '',
-        messages: messages,
-      }),
-    });
+    // Call Claude API with timeout to prevent hanging requests
+    // Use 270s timeout to stay within maxDuration (300s) with buffer for response processing
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 270000);
+
+    let response;
+    try {
+      response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: modelName,
+          max_tokens: maxTokens,
+          system: system || '',
+          messages: messages,
+        }),
+        signal: controller.signal,
+      });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error('Claude API request timed out after 270s');
+        return res.status(504).json({
+          error: 'Request timed out. The AI is processing a complex request. Please try again.',
+          details: { timeout: true, duration: '270s' },
+        });
+      }
+      throw fetchError;
+    }
+    clearTimeout(timeoutId);
 
     // Handle API errors
     if (!response.ok) {
