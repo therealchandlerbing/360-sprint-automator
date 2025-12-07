@@ -9,13 +9,14 @@ import { STEPS } from '../constants/steps.js';
 import { styles } from '../styles/appStyles.js';
 
 /**
- * Application header with branding and progress indicator
+ * Application header with branding, methodology link, and progress indicator
  * Memoized to prevent re-renders when input content changes
  */
 const HeaderComponent = ({
   completedSteps,
   isMobileMenuOpen,
   onToggleMobileMenu,
+  onOpenMethodology,
 }) => {
   const progressPercent = Math.round((completedSteps / STEPS.length) * 100);
 
@@ -42,18 +43,32 @@ const HeaderComponent = ({
             <p className="header-subtitle" style={styles.headerSubtitle}>Evidence-Based Business Validation</p>
           </div>
         </div>
-        <div className="progress-section" style={styles.progressSection} role="status" aria-live="polite">
-          <div style={styles.progressLabel}>Sprint Progress</div>
-          <div style={styles.progressValue}>{completedSteps} of {STEPS.length} steps</div>
-          <div
-            style={styles.progressBar}
-            role="progressbar"
-            aria-valuenow={completedSteps}
-            aria-valuemin={0}
-            aria-valuemax={STEPS.length}
-            aria-label={`${completedSteps} of ${STEPS.length} steps completed`}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {/* Methodology Trigger */}
+          <button
+            className="methodology-trigger"
+            onClick={onOpenMethodology}
+            style={styles.methodologyTrigger}
+            type="button"
+            aria-label="Learn about the VIANEO methodology"
           >
-            <div style={{ ...styles.progressFill, width: `${progressPercent}%` }} />
+            <span style={styles.methodologyTriggerIcon} aria-hidden="true">ⓘ</span>
+            <span>Methodology</span>
+          </button>
+          {/* Progress Section */}
+          <div className="progress-section" style={styles.progressSection} role="status" aria-live="polite">
+            <div style={styles.progressLabel}>Sprint Progress</div>
+            <div style={styles.progressValue}>{completedSteps} of {STEPS.length} steps</div>
+            <div
+              style={styles.progressBar}
+              role="progressbar"
+              aria-valuenow={completedSteps}
+              aria-valuemin={0}
+              aria-valuemax={STEPS.length}
+              aria-label={`${completedSteps} of ${STEPS.length} steps completed`}
+            >
+              <div style={{ ...styles.progressFill, width: `${progressPercent}%` }} />
+            </div>
           </div>
         </div>
       </div>

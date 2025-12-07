@@ -569,6 +569,307 @@ export const styles = {
     borderRadius: '6px',
   },
 
+  // Methodology Modal Trigger (in header)
+  methodologyTrigger: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '8px 14px',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: COLORS.textOnDarkMuted,
+    transition: 'all 0.15s ease',
+    marginRight: '20px',
+  },
+  methodologyTriggerIcon: {
+    fontSize: '16px',
+    opacity: 0.8,
+  },
+
+  // Methodology Modal
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2000,
+    padding: '20px',
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: '680px',
+    maxHeight: '80vh',
+    backgroundColor: COLORS.white,
+    borderRadius: '12px',
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '24px 28px',
+    borderBottom: `1px solid ${COLORS.border}`,
+    flexShrink: 0,
+  },
+  modalTitle: {
+    margin: 0,
+    fontSize: '24px',
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    letterSpacing: '-0.02em',
+  },
+  modalCloseButton: {
+    width: '36px',
+    height: '36px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.background,
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '20px',
+    color: COLORS.textMuted,
+    transition: 'all 0.15s ease',
+  },
+  modalContent: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '28px',
+  },
+  modalSection: {
+    marginBottom: '32px',
+  },
+  modalSectionHeader: {
+    fontSize: '12px',
+    fontWeight: '600',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    color: COLORS.textMuted,
+    marginBottom: '16px',
+    paddingBottom: '8px',
+    borderBottom: `2px solid ${COLORS.border}`,
+  },
+  modalHeroText: {
+    fontSize: '15px',
+    lineHeight: 1.7,
+    color: COLORS.textSecondary,
+    marginBottom: '16px',
+  },
+  modalHeroEmphasis: {
+    fontSize: '15px',
+    lineHeight: 1.7,
+    color: COLORS.textPrimary,
+    fontWeight: '500',
+  },
+  dimensionCard: {
+    padding: '20px',
+    borderRadius: '8px',
+    marginBottom: '12px',
+    borderLeftWidth: '4px',
+    borderLeftStyle: 'solid',
+  },
+  dimensionCardEmphasis: {
+    padding: '20px',
+    borderRadius: '8px',
+    marginBottom: '12px',
+    borderLeftWidth: '6px',
+    borderLeftStyle: 'solid',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+  },
+  dimensionHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '8px',
+  },
+  dimensionName: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  dimensionBadge: {
+    display: 'inline-block',
+    padding: '3px 10px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '600',
+    color: COLORS.white,
+  },
+  dimensionThreshold: {
+    fontSize: '13px',
+    color: COLORS.textMuted,
+    marginBottom: '8px',
+  },
+  dimensionQuestion: {
+    fontSize: '14px',
+    fontStyle: 'italic',
+    color: COLORS.textSecondary,
+    marginBottom: '12px',
+  },
+  dimensionDetails: {
+    fontSize: '13px',
+    color: COLORS.textMuted,
+    paddingLeft: '12px',
+    borderLeft: `2px solid ${COLORS.border}`,
+  },
+  modalCallout: {
+    backgroundColor: COLORS.background,
+    padding: '16px 20px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    lineHeight: 1.6,
+    color: COLORS.textSecondary,
+    borderLeft: `4px solid ${COLORS.primaryAccent}`,
+    marginTop: '16px',
+  },
+  modalCalloutEmphasis: {
+    backgroundColor: '#FEF3CD',
+    padding: '16px 20px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    lineHeight: 1.6,
+    color: COLORS.textPrimary,
+    borderLeft: `4px solid ${COLORS.warning}`,
+    fontWeight: '500',
+  },
+  processPhase: {
+    marginBottom: '16px',
+  },
+  processPhaseName: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: '8px',
+  },
+  processPhaseList: {
+    margin: 0,
+    paddingLeft: '20px',
+    fontSize: '14px',
+    color: COLORS.textSecondary,
+    lineHeight: 1.7,
+  },
+  evidenceMarker: {
+    display: 'inline-block',
+    padding: '2px 8px',
+    borderRadius: '4px',
+    fontSize: '11px',
+    fontWeight: '600',
+    fontFamily: '"SF Mono", "Menlo", "Monaco", monospace',
+    marginRight: '8px',
+  },
+  evidenceList: {
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
+  },
+  evidenceItem: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    marginBottom: '10px',
+    fontSize: '14px',
+    color: COLORS.textSecondary,
+    lineHeight: 1.5,
+  },
+  scoreRequirements: {
+    marginTop: '16px',
+    paddingTop: '16px',
+    borderTop: `1px solid ${COLORS.border}`,
+  },
+  scoreItem: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    marginBottom: '8px',
+    fontSize: '14px',
+    color: COLORS.textSecondary,
+    lineHeight: 1.5,
+  },
+  scoreNumber: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    backgroundColor: COLORS.primary,
+    color: COLORS.white,
+    fontSize: '12px',
+    fontWeight: '600',
+    marginRight: '12px',
+    flexShrink: 0,
+  },
+  outputList: {
+    listStyle: 'disc',
+    paddingLeft: '20px',
+    margin: '0 0 16px 0',
+    fontSize: '14px',
+    color: COLORS.textSecondary,
+    lineHeight: 1.7,
+  },
+  decisionGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '12px',
+    marginBottom: '16px',
+  },
+  decisionCard: {
+    padding: '16px',
+    borderRadius: '8px',
+    textAlign: 'center',
+  },
+  decisionLabel: {
+    fontSize: '14px',
+    fontWeight: '600',
+    marginBottom: '6px',
+  },
+  decisionDesc: {
+    fontSize: '12px',
+    lineHeight: 1.5,
+  },
+  maturityStages: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    marginTop: '16px',
+    padding: '16px',
+    backgroundColor: COLORS.background,
+    borderRadius: '8px',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: COLORS.textSecondary,
+  },
+  maturityStage: {
+    padding: '4px 10px',
+    borderRadius: '4px',
+    backgroundColor: COLORS.white,
+    border: `1px solid ${COLORS.border}`,
+  },
+  maturityArrow: {
+    color: COLORS.textMuted,
+  },
+  modalFooter: {
+    padding: '20px 28px',
+    borderTop: `1px solid ${COLORS.border}`,
+    backgroundColor: COLORS.background,
+    fontSize: '13px',
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    flexShrink: 0,
+  },
+
   // Download section
   downloadSection: {
     padding: '20px 16px',
@@ -624,6 +925,12 @@ export const responsiveStyles = `
     z-index: 999;
   }
 
+  /* Methodology trigger hover */
+  .methodology-trigger:hover {
+    background-color: rgba(255,255,255,0.2) !important;
+    color: #FFFFFF !important;
+  }
+
   /* Mobile Responsive Styles */
   @media (max-width: 768px) {
     .mobile-menu-btn {
@@ -642,6 +949,14 @@ export const responsiveStyles = `
       display: none !important;
     }
     .progress-section {
+      display: none !important;
+    }
+    .methodology-trigger {
+      padding: 6px 10px !important;
+      font-size: 13px !important;
+      margin-right: 0 !important;
+    }
+    .methodology-trigger span:last-child {
       display: none !important;
     }
     .main-layout {
