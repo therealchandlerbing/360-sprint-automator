@@ -11,7 +11,7 @@ export const config = {
   maxDuration: 300, // Allow up to 5 minutes for Claude API responses (complex prompts need more time)
 };
 
-const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-5-20250929';
+const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 
 export default async function handler(req, res) {
   // Only allow POST requests
