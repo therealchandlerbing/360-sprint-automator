@@ -9,14 +9,13 @@ import { STEPS } from '../constants/steps.js';
 import { styles } from '../styles/appStyles.js';
 
 /**
- * Application header with branding, methodology link, and progress indicator
+ * Application header with branding and progress indicator
  * Memoized to prevent re-renders when input content changes
  */
 const HeaderComponent = ({
   completedSteps,
   isMobileMenuOpen,
   onToggleMobileMenu,
-  onOpenMethodology,
 }) => {
   const progressPercent = Math.round((completedSteps / STEPS.length) * 100);
 
@@ -44,16 +43,6 @@ const HeaderComponent = ({
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {/* Methodology Trigger */}
-          <button
-            className="methodology-trigger"
-            onClick={onOpenMethodology}
-            type="button"
-            aria-label="Learn about the VIANEO methodology"
-          >
-            <span className="methodology-trigger-icon" aria-hidden="true">ⓘ</span>
-            <span>Methodology</span>
-          </button>
           {/* Progress Section */}
           <div className="progress-section" style={styles.progressSection} role="status" aria-live="polite">
             <div style={styles.progressLabel}>Sprint Progress</div>

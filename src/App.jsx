@@ -408,7 +408,6 @@ export default function VianeoSprintAutomator() {
           completedSteps={completedSteps}
           isMobileMenuOpen={isMobileMenuOpen}
           onToggleMobileMenu={toggleMobileMenu}
-          onOpenMethodology={() => setShowMethodologyModal(true)}
         />
 
         {/* Methodology Modal */}
@@ -427,6 +426,7 @@ export default function VianeoSprintAutomator() {
             hasInput={inputContent.length > 0}
             isMobileMenuOpen={isMobileMenuOpen}
             onStepSelect={handleStepSelect}
+            onOpenMethodology={() => setShowMethodologyModal(true)}
             onDownloadAllAsZip={downloadAllAsZip}
             onDownloadAllOutputs={downloadAllOutputs}
             onDownloadAllOutputsAsHtml={downloadAllOutputsAsHtml}

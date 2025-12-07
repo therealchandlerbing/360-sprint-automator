@@ -19,6 +19,7 @@ const SidebarComponent = ({
   hasInput,
   isMobileMenuOpen,
   onStepSelect,
+  onOpenMethodology,
   onDownloadAllAsZip,
   onDownloadAllOutputs,
   onDownloadAllOutputsAsHtml,
@@ -52,6 +53,15 @@ const SidebarComponent = ({
       <nav className="sidebar-card" style={styles.sidebarCard}>
         <div style={styles.sidebarHeader}>
           <h2 style={styles.sidebarTitle}>Steps</h2>
+          <button
+            className="methodology-trigger"
+            onClick={onOpenMethodology}
+            type="button"
+            aria-label="Learn about the VIANEO methodology"
+          >
+            <span className="methodology-trigger-icon" aria-hidden="true">ⓘ</span>
+            <span>Methodology</span>
+          </button>
         </div>
         <div style={styles.stepsContainer} role="list">
           {PHASES.map(phase => (
