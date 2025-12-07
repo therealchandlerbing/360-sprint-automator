@@ -392,7 +392,7 @@ Examples:
 ├─────────────────────────────────────────────────────────────────────┤
 │  Model: Configurable via CLAUDE_MODEL (see config table)            │
 │  Max Tokens: 16000 (configurable)                                   │
-│  Timeout: 60 seconds                                                │
+│  Timeout: 270s server / 280s client                                 │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -445,7 +445,7 @@ Examples:
 │   │   ├── colors.js          # Design system tokens
 │   │   └── storage.js         # localStorage keys
 │   ├── hooks/                 # Custom React hooks
-│   │   ├── useClaudeAPI.js    # API calls with retry
+│   │   ├── useClaudeAPI.js    # API calls with retry, timeout & error handling
 │   │   ├── useExpressAssessment.js    # Express mode logic
 │   │   ├── useSessionPersistence.js   # localStorage sync
 │   │   └── useMobileMenu.js   # Mobile navigation
@@ -477,7 +477,7 @@ Examples:
 | Variable | Required | Default | Description |
 |----------|:--------:|---------|-------------|
 | `ANTHROPIC_API_KEY` | Yes | - | Your Anthropic API key |
-| `CLAUDE_MODEL` | No | `claude-sonnet-4-5-20250929` | Claude model ID |
+| `CLAUDE_MODEL` | No | `claude-sonnet-4-20250514` | Claude model ID |
 | `CLAUDE_MAX_TOKENS` | No | `16000` | Maximum response tokens |
 
 ### Local Development
