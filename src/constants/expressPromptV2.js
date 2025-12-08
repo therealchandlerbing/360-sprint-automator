@@ -122,7 +122,7 @@ Provide a DEEP, MULTI-LAYERED analysis using the VIANEO Framework. For each of t
 9. **30/60/90 day projections** (what should happen in each timeframe)
 10. **Key metrics** to track for this dimension
 11. **Competitive positioning** (vs. market standards)
-12. **Resource priorities** (areas requiring immediate resource allocation)
+12. **Resource priorities** (2-3 specific resource needs for this dimension)
 
 ### The 5 Dimensions with Sub-Dimensions:
 
@@ -177,7 +177,8 @@ Analyze how dimensions interact:
       "recommendations": ["action 1", "action 2", "action 3"],
       "timeline": { "30day": "milestone", "60day": "milestone", "90day": "milestone" },
       "keyMetrics": ["metric 1", "metric 2", "metric 3"],
-      "competitivePosition": "positioning statement"
+      "competitivePosition": "positioning statement",
+      "resourcePriority": ["resource need 1", "resource need 2"]
     },
     "desirability": {
       "strengths": ["specific strength 1", "specific strength 2", "specific strength 3"],
@@ -185,7 +186,8 @@ Analyze how dimensions interact:
       "recommendations": ["action 1", "action 2", "action 3"],
       "timeline": { "30day": "milestone", "60day": "milestone", "90day": "milestone" },
       "keyMetrics": ["metric 1", "metric 2", "metric 3"],
-      "competitivePosition": "positioning statement"
+      "competitivePosition": "positioning statement",
+      "resourcePriority": ["resource need 1", "resource need 2"]
     },
     "acceptability": {
       "strengths": ["specific strength 1", "specific strength 2", "specific strength 3"],
@@ -193,7 +195,8 @@ Analyze how dimensions interact:
       "recommendations": ["action 1", "action 2", "action 3"],
       "timeline": { "30day": "milestone", "60day": "milestone", "90day": "milestone" },
       "keyMetrics": ["metric 1", "metric 2", "metric 3"],
-      "competitivePosition": "positioning statement"
+      "competitivePosition": "positioning statement",
+      "resourcePriority": ["resource need 1", "resource need 2"]
     },
     "feasibility": {
       "strengths": ["specific strength 1", "specific strength 2", "specific strength 3"],
@@ -201,7 +204,8 @@ Analyze how dimensions interact:
       "recommendations": ["action 1", "action 2", "action 3"],
       "timeline": { "30day": "milestone", "60day": "milestone", "90day": "milestone" },
       "keyMetrics": ["metric 1", "metric 2", "metric 3"],
-      "competitivePosition": "positioning statement"
+      "competitivePosition": "positioning statement",
+      "resourcePriority": ["resource need 1", "resource need 2"]
     },
     "viability": {
       "strengths": ["specific strength 1", "specific strength 2", "specific strength 3"],
@@ -209,7 +213,8 @@ Analyze how dimensions interact:
       "recommendations": ["action 1", "action 2", "action 3"],
       "timeline": { "30day": "milestone", "60day": "milestone", "90day": "milestone" },
       "keyMetrics": ["metric 1", "metric 2", "metric 3"],
-      "competitivePosition": "positioning statement"
+      "competitivePosition": "positioning statement",
+      "resourcePriority": ["resource need 1", "resource need 2"]
     }
   },
   "crossDimensionalAnalysis": {
@@ -220,6 +225,13 @@ Analyze how dimensions interact:
       "dimension": "dimension_id",
       "reason": "explanation",
       "impact": "impact statement"
+    },
+    "interactionMatrix": {
+      "legitimacy": { "desirability": 5, "acceptability": 3, "feasibility": 4, "viability": 7 },
+      "desirability": { "legitimacy": 6, "acceptability": 5, "feasibility": 8, "viability": 9 },
+      "acceptability": { "legitimacy": 4, "desirability": 3, "feasibility": 2, "viability": 6 },
+      "feasibility": { "legitimacy": 5, "desirability": 7, "acceptability": 3, "viability": 8 },
+      "viability": { "legitimacy": 6, "desirability": 8, "acceptability": 4, "feasibility": 7 }
     }
   },
   "executiveSummary": "2-3 sentence overview",

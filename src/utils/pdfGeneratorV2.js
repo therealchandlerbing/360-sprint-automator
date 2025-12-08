@@ -255,7 +255,7 @@ function generateCrossDimensionalPage(data, pageNumber, totalPages) {
             <thead>
               <tr>
                 <th class="matrix-label">Impact From →<br/>On ↓</th>
-                ${DIMENSIONS.map(dim => `<th>${dim.name.substring(0, 8)}</th>`).join('')}
+                ${DIMENSIONS.map(dim => `<th>${getDimensionAbbreviation(dim.name)}</th>`).join('')}
               </tr>
             </thead>
             <tbody>
@@ -287,6 +287,20 @@ function generateCrossDimensionalPage(data, pageNumber, totalPages) {
 }
 
 /**
+ * Get abbreviated dimension name for matrix headers
+ */
+function getDimensionAbbreviation(dimensionName) {
+  const abbreviations = {
+    'Legitimacy': 'Legit.',
+    'Desirability': 'Desire.',
+    'Acceptability': 'Accept.',
+    'Feasibility': 'Feasib.',
+    'Viability': 'Viable'
+  };
+  return abbreviations[dimensionName] || dimensionName.substring(0, 8);
+}
+
+/**
  * Calculate overall confidence from dimension confidence scores
  */
 function calculateOverallConfidence(confidenceScores) {
@@ -303,8 +317,11 @@ function calculateOverallConfidence(confidenceScores) {
  * Get confidence level label
  */
 function getConfidenceLabel(confidence) {
-  if (confidence >= 8) return 'High';
-  if (confidence >= 6) return 'Medium';
+  const CONFIDENCE_THRESHOLD_HIGH = 8;
+  const CONFIDENCE_THRESHOLD_MEDIUM = 6;
+
+  if (confidence >= CONFIDENCE_THRESHOLD_HIGH) return 'High';
+  if (confidence >= CONFIDENCE_THRESHOLD_MEDIUM) return 'Medium';
   return 'Low';
 }
 
@@ -500,9 +517,25 @@ export function generateHTMLReport(assessmentData) {
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      border: 1px solid;
+    }
+
+    .cover-confidence.high {
       background: rgba(16, 185, 129, 0.2);
       color: #059669;
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .cover-confidence.medium {
+      background: rgba(245, 158, 11, 0.2);
+      color: #D97706;
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .cover-confidence.low {
+      background: rgba(239, 68, 68, 0.2);
+      color: #DC2626;
+      border-color: rgba(239, 68, 68, 0.3);
     }
 
     .cover-dimensions {
@@ -1292,7 +1325,7 @@ export function generateHTMLReport(assessmentData) {
                 ${gate.label}
               </div>
               ${confidenceLabel ? `
-              <div class="cover-confidence">
+              <div class="cover-confidence ${confidenceLabel.toLowerCase()}">
                 ${confidenceLabel} Confidence
               </div>
               ` : ''}
