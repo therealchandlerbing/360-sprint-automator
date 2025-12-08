@@ -518,12 +518,6 @@ const ExpressV2InputComponent = ({
                 {loading ? 'Running Assessment...' : 'Run Express Validation'}
               </button>
             </div>
-
-            {loading && (
-              <div style={styles.progressBar}>
-                <div style={{ ...styles.progressFill, width: '30%' }} />
-              </div>
-            )}
           </div>
         )}
       </div>

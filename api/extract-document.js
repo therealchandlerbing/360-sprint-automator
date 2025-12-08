@@ -105,11 +105,24 @@ If information for a field is not found, include the field with an empty string.
         }
       ];
     } else {
-      // For binary files (PDF, DOCX, PPTX), send as document
-      const mediaType = fileType === 'application/pdf' ? 'application/pdf' :
-                        fileName.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' :
-                        fileName.endsWith('.pptx') ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation' :
-                        'application/pdf';
+      // For binary files (PDF, DOCX, PPTX, DOC, PPT), send as document
+      const mediaType = (() => {
+        if (fileType === 'application/pdf') return 'application/pdf';
+
+        const ext = fileName.slice(fileName.lastIndexOf('.')).toLowerCase();
+        switch (ext) {
+          case '.docx':
+            return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          case '.doc':
+            return 'application/msword';
+          case '.pptx':
+            return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+          case '.ppt':
+            return 'application/vnd.ms-powerpoint';
+          default:
+            throw new Error(`Unsupported file extension: ${ext}. This should have been caught by validation.`);
+        }
+      })();
 
       messageContent = [
         {
@@ -144,9 +157,10 @@ If information for a field is not found, include the field with an empty string.
 
     // Call Claude API
     const modelName = process.env.CLAUDE_MODEL || DEFAULT_CLAUDE_MODEL;
+    const maxTokens = parseInt(process.env.DOCUMENT_EXTRACTION_MAX_TOKENS, 10) || 8000;
     const response = await client.messages.create({
       model: modelName,
-      max_tokens: 4000,
+      max_tokens: maxTokens,
       messages: [
         {
           role: 'user',

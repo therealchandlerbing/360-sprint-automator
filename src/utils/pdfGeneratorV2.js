@@ -246,6 +246,38 @@ function generateCrossDimensionalPage(data, pageNumber, totalPages) {
         </div>
       </div>
 
+      ${crossAnalysis.interactionMatrix ? `
+      <div class="interaction-matrix-section">
+        <h3 class="section-title"><span class="dep-icon">🔢</span> Interaction Matrix</h3>
+        <p class="cross-column-subtitle" style="margin-bottom: 10px;">How dimensions influence each other (-10 to +10)</p>
+        <div class="interaction-matrix">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th class="matrix-label">Impact From →<br/>On ↓</th>
+                ${DIMENSIONS.map(dim => `<th>${getDimensionAbbreviation(dim.name)}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${DIMENSIONS.map(rowDim => `
+                <tr>
+                  <td class="matrix-label">${rowDim.name}</td>
+                  ${DIMENSIONS.map(colDim => {
+                    if (rowDim.id === colDim.id) {
+                      return '<td class="matrix-cell-neutral">—</td>';
+                    }
+                    const impact = crossAnalysis.interactionMatrix[rowDim.id]?.[colDim.id] || 0;
+                    const cellClass = impact > 0 ? 'matrix-cell-positive' : impact < 0 ? 'matrix-cell-negative' : 'matrix-cell-neutral';
+                    return `<td class="${cellClass}">${impact > 0 ? '+' : ''}${impact}</td>`;
+                  }).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      ` : ''}
+
       <div class="page-footer">
         <span>360 Validation Sprint • VIANEO Framework Assessment</span>
         <span>${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
@@ -255,11 +287,52 @@ function generateCrossDimensionalPage(data, pageNumber, totalPages) {
 }
 
 /**
+ * Get abbreviated dimension name for matrix headers
+ */
+function getDimensionAbbreviation(dimensionName) {
+  const abbreviations = {
+    'Legitimacy': 'Legit.',
+    'Desirability': 'Desire.',
+    'Acceptability': 'Accept.',
+    'Feasibility': 'Feasib.',
+    'Viability': 'Viable'
+  };
+  return abbreviations[dimensionName] || dimensionName.substring(0, 8);
+}
+
+/**
+ * Calculate overall confidence from dimension confidence scores
+ */
+function calculateOverallConfidence(confidenceScores) {
+  if (!confidenceScores) return null;
+
+  const scores = DIMENSIONS.map(dim => confidenceScores[dim.id]).filter(score => score != null);
+  if (scores.length === 0) return null;
+
+  const avgConfidence = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+  return Math.round(avgConfidence);
+}
+
+/**
+ * Get confidence level label
+ */
+function getConfidenceLabel(confidence) {
+  const CONFIDENCE_THRESHOLD_HIGH = 8;
+  const CONFIDENCE_THRESHOLD_MEDIUM = 6;
+
+  if (confidence >= CONFIDENCE_THRESHOLD_HIGH) return 'High';
+  if (confidence >= CONFIDENCE_THRESHOLD_MEDIUM) return 'Medium';
+  return 'Low';
+}
+
+/**
  * Generate complete HTML report
  */
 export function generateHTMLReport(assessmentData) {
   const overallScore = calculateOverallScore(assessmentData.scores);
   const gate = getGateRecommendation(overallScore);
+  const overallConfidence = calculateOverallConfidence(assessmentData.confidence);
+  const confidenceLabel = overallConfidence ? getConfidenceLabel(overallConfidence) : null;
   const assessmentDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -444,9 +517,25 @@ export function generateHTMLReport(assessmentData) {
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      border: 1px solid;
+    }
+
+    .cover-confidence.high {
       background: rgba(16, 185, 129, 0.2);
       color: #059669;
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .cover-confidence.medium {
+      background: rgba(245, 158, 11, 0.2);
+      color: #D97706;
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .cover-confidence.low {
+      background: rgba(239, 68, 68, 0.2);
+      color: #DC2626;
+      border-color: rgba(239, 68, 68, 0.3);
     }
 
     .cover-dimensions {
@@ -1109,6 +1198,62 @@ export function generateHTMLReport(assessmentData) {
       line-height: 1.5;
     }
 
+    .interaction-matrix-section {
+      margin-bottom: 16px;
+    }
+
+    .interaction-matrix {
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8px;
+    }
+
+    .matrix-table th {
+      background: #F8FAFC;
+      padding: 6px 4px;
+      text-align: center;
+      font-weight: 600;
+      color: #475569;
+      border: 1px solid #E2E8F0;
+    }
+
+    .matrix-table td {
+      padding: 6px 4px;
+      text-align: center;
+      border: 1px solid #E2E8F0;
+      font-weight: 600;
+    }
+
+    .matrix-table .matrix-label {
+      background: #F8FAFC;
+      text-align: left;
+      font-weight: 600;
+      padding-left: 8px;
+    }
+
+    .matrix-cell-positive {
+      background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
+      color: #065F46;
+    }
+
+    .matrix-cell-negative {
+      background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
+      color: #991B1B;
+    }
+
+    .matrix-cell-neutral {
+      background: #F8FAFC;
+      color: #64748B;
+    }
+
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .page { page-break-after: always; }
@@ -1179,6 +1324,11 @@ export function generateHTMLReport(assessmentData) {
               <div class="cover-gate" style="background: ${gate.bg}; color: ${gate.color};">
                 ${gate.label}
               </div>
+              ${confidenceLabel ? `
+              <div class="cover-confidence ${confidenceLabel.toLowerCase()}">
+                ${confidenceLabel} Confidence
+              </div>
+              ` : ''}
             </div>
           </div>
           <div>
