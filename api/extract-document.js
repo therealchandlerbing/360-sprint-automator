@@ -7,8 +7,11 @@ export const config = {
   maxDuration: 120, // 2 minutes for document extraction
 };
 
+const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_API_VERSION = '2023-06-01';
 const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-20250514';
-const API_TIMEOUT_MS = 110 * 1000; // 110 seconds (with buffer for 120s maxDuration)
+const API_TIMEOUT_SECONDS = 110;
+const API_TIMEOUT_MS = API_TIMEOUT_SECONDS * 1000; // 110 seconds (with buffer for 120s maxDuration)
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -161,12 +164,12 @@ If information for a field is not found, include the field with an empty string.
 
     let response;
     try {
-      response = await fetch('https://api.anthropic.com/v1/messages', {
+      response = await fetch(ANTHROPIC_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
+          'anthropic-version': ANTHROPIC_API_VERSION,
         },
         body: JSON.stringify({
           model: modelName,
@@ -183,7 +186,7 @@ If information for a field is not found, include the field with an empty string.
     } catch (fetchError) {
       clearTimeout(timeoutId);
       if (fetchError.name === 'AbortError') {
-        console.error(`Document extraction timed out after ${API_TIMEOUT_MS / 1000}s`);
+        console.error(`Document extraction timed out after ${API_TIMEOUT_SECONDS}s`);
         return res.status(504).json({
           error: 'Request timed out. The document may be too complex. Please try a simpler document or use manual entry.',
           details: { timeout: true }
@@ -199,22 +202,23 @@ If information for a field is not found, include the field with an empty string.
       console.error('Claude API error:', response.status, errorData);
 
       // Return appropriate error based on status
-      if (response.status === 401) {
-        return res.status(500).json({
-          error: 'API authentication failed. Please check server configuration.',
-          details: 'Invalid API key'
-        });
+      switch (response.status) {
+        case 401:
+          return res.status(500).json({
+            error: 'API authentication failed. Please check server configuration.',
+            details: 'Invalid API key'
+          });
+        case 429:
+          return res.status(429).json({
+            error: 'Rate limit exceeded. Please try again in a few moments.',
+            details: 'Too many requests'
+          });
+        default:
+          return res.status(response.status).json({
+            error: `API error: ${response.status}`,
+            details: errorData
+          });
       }
-      if (response.status === 429) {
-        return res.status(429).json({
-          error: 'Rate limit exceeded. Please try again in a few moments.',
-          details: 'Too many requests'
-        });
-      }
-      return res.status(response.status).json({
-        error: `API error: ${response.status}`,
-        details: errorData
-      });
     }
 
     const data = await response.json();
