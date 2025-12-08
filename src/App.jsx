@@ -154,7 +154,18 @@ export default function VianeoSprintAutomator() {
         body: JSON.stringify({ file: base64, fileName, fileType })
       });
 
-      const result = await response.json();
+      // Get response as text first to handle non-JSON error responses
+      const responseText = await response.text();
+
+      // Try to parse as JSON
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        // Response is not valid JSON - likely a server error message
+        const errorPreview = responseText.substring(0, 100);
+        throw new Error(`Server returned a non-JSON response (status: ${response.status}): ${errorPreview}${responseText.length > 100 ? '...' : ''}`);
+      }
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Failed to extract document');
