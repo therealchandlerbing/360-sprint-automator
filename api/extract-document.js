@@ -3,13 +3,12 @@
 // Extracts business information from uploaded documents
 // ============================================
 
-import Anthropic from '@anthropic-ai/sdk';
-
 export const config = {
   maxDuration: 120, // 2 minutes for document extraction
 };
 
 const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+const API_TIMEOUT_MS = 110 * 1000; // 110 seconds (with buffer for 120s maxDuration)
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -57,15 +56,13 @@ export default async function handler(req, res) {
   }
 
   // Check for API key
-  if (!process.env.ANTHROPIC_API_KEY) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
     console.error('ANTHROPIC_API_KEY not configured');
     return res.status(500).json({ error: 'API key not configured' });
   }
 
   try {
-    const client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
 
     // Determine if file is text-based (markdown/txt) or binary (pdf/docx/pptx)
     const isTextBased = fileType.includes('text') || fileType.includes('markdown') ||
@@ -155,22 +152,75 @@ If information for a field is not found, include the field with an empty string.
       ];
     }
 
-    // Call Claude API
+    // Call Claude API using fetch (consistent with api/claude.js)
     const modelName = process.env.CLAUDE_MODEL || DEFAULT_CLAUDE_MODEL;
     const maxTokens = parseInt(process.env.DOCUMENT_EXTRACTION_MAX_TOKENS, 10) || 8000;
-    const response = await client.messages.create({
-      model: modelName,
-      max_tokens: maxTokens,
-      messages: [
-        {
-          role: 'user',
-          content: messageContent
-        }
-      ]
-    });
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+    let response;
+    try {
+      response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: modelName,
+          max_tokens: maxTokens,
+          messages: [
+            {
+              role: 'user',
+              content: messageContent
+            }
+          ]
+        }),
+        signal: controller.signal,
+      });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error(`Document extraction timed out after ${API_TIMEOUT_MS / 1000}s`);
+        return res.status(504).json({
+          error: 'Request timed out. The document may be too complex. Please try a simpler document or use manual entry.',
+          details: { timeout: true }
+        });
+      }
+      throw fetchError;
+    }
+    clearTimeout(timeoutId);
+
+    // Handle API errors
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Claude API error:', response.status, errorData);
+
+      // Return appropriate error based on status
+      if (response.status === 401) {
+        return res.status(500).json({
+          error: 'API authentication failed. Please check server configuration.',
+          details: 'Invalid API key'
+        });
+      }
+      if (response.status === 429) {
+        return res.status(429).json({
+          error: 'Rate limit exceeded. Please try again in a few moments.',
+          details: 'Too many requests'
+        });
+      }
+      return res.status(response.status).json({
+        error: `API error: ${response.status}`,
+        details: errorData
+      });
+    }
+
+    const data = await response.json();
 
     // Extract text from response
-    const extractedText = response.content
+    const extractedText = data.content
       .filter(item => item.type === 'text')
       .map(item => item.text)
       .join('\n');
@@ -204,21 +254,7 @@ If information for a field is not found, include the field with an empty string.
   } catch (error) {
     console.error('Document extraction error:', error);
 
-    // Handle specific error types
-    if (error.status === 401) {
-      return res.status(500).json({
-        error: 'API authentication failed. Please check server configuration.',
-        details: 'Invalid API key'
-      });
-    }
-
-    if (error.status === 429) {
-      return res.status(429).json({
-        error: 'Rate limit exceeded. Please try again in a few moments.',
-        details: 'Too many requests'
-      });
-    }
-
+    // Handle JSON parsing errors specifically
     if (error.message && error.message.includes('JSON')) {
       return res.status(500).json({
         error: 'Failed to parse document content. The document may not contain structured business information.',
