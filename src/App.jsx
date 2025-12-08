@@ -164,7 +164,7 @@ export default function VianeoSprintAutomator() {
       } catch (parseError) {
         // Response is not valid JSON - likely a server error message
         const errorPreview = responseText.substring(0, 100);
-        throw new Error(`Server error: ${errorPreview}${responseText.length > 100 ? '...' : ''}`);
+        throw new Error(`Server returned a non-JSON response (status: ${response.status}): ${errorPreview}${responseText.length > 100 ? '...' : ''}`);
       }
 
       if (!response.ok || !result.success) {
