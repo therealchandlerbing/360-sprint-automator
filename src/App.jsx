@@ -81,7 +81,6 @@ export default function VianeoSprintAutomator() {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingLog, setProcessingLog] = useState([]);
-  const [showBranchSelector, setShowBranchSelector] = useState(false);
   const [error, setError] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(null);
   const [assessmentMode, setAssessmentMode] = useState('step-by-step'); // 'step-by-step' | 'express'
@@ -208,10 +207,6 @@ export default function VianeoSprintAutomator() {
 
   // Process current step
   const processStep = useCallback(async () => {
-    if (currentStep === 1 && !organizationBranch) {
-      setShowBranchSelector(true);
-      return;
-    }
     if (currentStep === 0 && !inputContent.trim()) {
       setError('Please upload files or paste content to analyze');
       return;
@@ -407,14 +402,12 @@ export default function VianeoSprintAutomator() {
       setUploadedFiles([]);
       setProcessingLog([]);
       setError(null);
-      setShowBranchSelector(false);
     }
   }, [clearSession]);
 
   // Branch selection handler
   const handleBranchSelect = useCallback((branchId) => {
     setOrganizationBranch(branchId);
-    setShowBranchSelector(false);
   }, [setOrganizationBranch]);
 
   // Step selection handler
@@ -521,9 +514,20 @@ export default function VianeoSprintAutomator() {
               {/* Step Header */}
               <StepHeader step={currentStepInfo} phase={currentPhase} />
 
-              {/* Branch Selector (Step 1) */}
-              {showBranchSelector && currentStep === 1 && (
+              {/* Branch Selector (Step 1) - show automatically when no branch selected */}
+              {currentStep === 1 && !organizationBranch && (
                 <BranchSelector onSelect={handleBranchSelect} />
+              )}
+
+              {/* Process Button for Steps 1+ (after branch selection for Step 1) */}
+              {currentStep >= 1 && (currentStep !== 1 || organizationBranch) && (
+                <ProcessButton
+                  currentStep={currentStep}
+                  stepName={currentStepInfo.name}
+                  isProcessing={isProcessing}
+                  isDisabled={isProcessing}
+                  onClick={processStep}
+                />
               )}
 
               {/* Input Section (Step 0) */}
