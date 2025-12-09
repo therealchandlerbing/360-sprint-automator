@@ -440,6 +440,19 @@ export function validateExpressV2Assessment(data) {
     }
   }
 
+  // Validate top-level arrays have content
+  const requiredArrays = ['topStrengths', 'criticalRisks', 'immediateActions', 'resourcePriority'];
+  for (const arrayName of requiredArrays) {
+    if (data[arrayName] && (!Array.isArray(data[arrayName]) || data[arrayName].length === 0)) {
+      warnings.push(`${arrayName} is empty or not an array`);
+    }
+  }
+
+  // Validate executiveSummary is a non-empty string
+  if (data.executiveSummary && (typeof data.executiveSummary !== 'string' || data.executiveSummary.trim().length < 20)) {
+    warnings.push('Executive summary is missing or too short (should be 2-3 sentences)');
+  }
+
   // Validate evidence basis structure
   if (data.evidenceBasis) {
     for (const dim of DIMENSIONS) {
@@ -550,17 +563,62 @@ export function validateExpressV2Assessment(data) {
 
   // Validate analysis structure for each dimension
   if (data.analysis) {
-    const requiredAnalysisFields = ['strengths', 'risks', 'recommendations'];
+    const requiredArrayFields = ['strengths', 'risks', 'recommendations', 'keyMetrics'];
     for (const dim of DIMENSIONS) {
       const analysis = data.analysis[dim.id];
       if (!analysis) {
         warnings.push(`Missing analysis for ${dim.name}`);
         continue;
       }
-      for (const field of requiredAnalysisFields) {
+      // Validate required array fields
+      for (const field of requiredArrayFields) {
         if (!Array.isArray(analysis[field]) || analysis[field].length === 0) {
           warnings.push(`${dim.name} analysis missing or empty: ${field}`);
         }
+      }
+      // Validate timeline structure
+      if (!analysis.timeline) {
+        warnings.push(`${dim.name} analysis missing timeline`);
+      } else {
+        const timelineKeys = ['30day', '60day', '90day'];
+        for (const key of timelineKeys) {
+          if (!analysis.timeline[key]) {
+            warnings.push(`${dim.name} timeline missing ${key} milestone`);
+          }
+        }
+      }
+      // Validate competitive position
+      if (!analysis.competitivePosition || typeof analysis.competitivePosition !== 'string') {
+        warnings.push(`${dim.name} analysis missing competitivePosition`);
+      }
+    }
+  }
+
+  // Validate crossDimensionalAnalysis structure
+  if (data.crossDimensionalAnalysis) {
+    const cda = data.crossDimensionalAnalysis;
+    // Validate required arrays
+    if (!Array.isArray(cda.synergies) || cda.synergies.length === 0) {
+      warnings.push('Cross-dimensional analysis missing synergies');
+    }
+    if (!Array.isArray(cda.tradeoffs) || cda.tradeoffs.length === 0) {
+      warnings.push('Cross-dimensional analysis missing tradeoffs');
+    }
+    if (!Array.isArray(cda.criticalDependencies) || cda.criticalDependencies.length === 0) {
+      warnings.push('Cross-dimensional analysis missing criticalDependencies');
+    }
+    // Validate bottleneck structure
+    if (!cda.bottleneck) {
+      warnings.push('Cross-dimensional analysis missing bottleneck');
+    } else {
+      if (!cda.bottleneck.dimension) {
+        warnings.push('Bottleneck missing dimension identifier');
+      }
+      if (!cda.bottleneck.reason) {
+        warnings.push('Bottleneck missing reason explanation');
+      }
+      if (!cda.bottleneck.impact) {
+        warnings.push('Bottleneck missing impact statement');
       }
     }
   }

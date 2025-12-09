@@ -409,9 +409,15 @@ export function useExpressAssessment({ projectName, inputContent, callClaudeAPI,
 
       // Validate the assessment data
       const validation = validateExpressV2Assessment(assessmentData);
-      if (!validation.valid) {
+      if (validation.warnings.length > 0) {
         console.warn('Assessment validation warnings:', validation.warnings);
+      }
+      if (!validation.valid) {
         console.error('Assessment validation errors:', validation.errors);
+        // Throw error to halt processing if validation fails
+        throw new Error(
+          `Assessment validation failed:\n${validation.errors.join('\n')}`
+        );
       }
 
       if (abortRef.current) {
