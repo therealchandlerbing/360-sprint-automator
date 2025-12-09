@@ -141,6 +141,50 @@ Provide a DEEP, MULTI-LAYERED analysis using the VIANEO Framework. For each of t
 5. **VIABILITY (20% weight, threshold ≥3.0)**
    - Sub: Revenue Clarity, Unit Economics, Path to Profitability
 
+## SCORING RUBRIC - Use Full Range (1.0 to 5.0)
+
+You MUST use the FULL scoring range. Avoid clustering scores in the 3.0-4.0 "safe zone". Score based on EVIDENCE, not assumptions.
+
+| Score Range | Meaning | Evidence Required |
+|-------------|---------|-------------------|
+| 1.0-1.9 | CRITICAL GAP - Missing fundamentals | No data, contradictions, red flags, fundamental flaws |
+| 2.0-2.4 | SIGNIFICANT WEAKNESS - Major assumptions unvalidated | Anecdotal only, no market validation, wishful thinking |
+| 2.5-2.9 | BELOW THRESHOLD - Notable gaps need resolution | Limited data, single data point, early assumptions |
+| 3.0-3.4 | THRESHOLD MET - Functional but needs work | Some validation, early traction signals, reasonable basis |
+| 3.5-3.9 | SOLID - Above average with minor gaps | Multiple validation points, early customers, credible plan |
+| 4.0-4.4 | STRONG - Well-validated with clear evidence | Revenue data, testimonials, market proof, strong team |
+| 4.5-4.9 | EXCELLENT - Exceptional with minimal gaps | Significant traction, proven model, competitive advantage |
+| 5.0 | OUTSTANDING - Best-in-class, fully validated | Market leadership, exceptional metrics, undeniable proof |
+
+### CALIBRATION: When to Score BELOW 3.0
+
+- Pre-revenue startup with no paying customers → Viability: 2.0-2.5
+- No user testing or customer validation → Desirability: 2.0-2.5
+- Regulatory uncertainty in heavily regulated market → Acceptability: 2.0-2.5
+- Solo founder, no technical co-founder for tech product → Feasibility: 2.0-2.5
+- Problem statement based on founder intuition only → Legitimacy: 2.0-2.5
+- No competitive differentiation identified → Desirability: 2.0-2.5
+- Team lacks domain experience → Feasibility: 2.0-2.5
+
+### CALIBRATION: When to Score ABOVE 4.5
+
+- Proven PMF with 100K+ active users → Desirability: 4.5+
+- $1M+ ARR with positive unit economics → Viability: 4.5+
+- Strategic partnerships with industry leaders signed → Acceptability: 4.5+
+- Team with multiple successful exits in domain → Feasibility: 4.5+
+- Problem validated by extensive research + paying customers → Legitimacy: 4.5+
+- Clear market leader in defined segment → Desirability: 4.5+
+- Regulatory approval already obtained → Acceptability: 4.5+
+
+## Evidence Tracking
+
+For EACH dimension, categorize ALL claims using these tags:
+- [VALIDATED]: Direct evidence provided (revenue numbers, customer data, signed contracts, pilot results)
+- [INFERRED]: Reasonable inference from context (market size from industry reports, team capability from backgrounds)
+- [ASSUMED]: No direct evidence, using industry norms or reasonable assumptions
+
+**IMPORTANT**: Heavy reliance on [ASSUMED] evidence should REDUCE the dimension score by 0.5-1.0 points.
+
 ## Cross-Dimensional Analysis Required:
 
 Analyze how dimensions interact:
@@ -152,23 +196,32 @@ Analyze how dimensions interact:
 
 ## Required Output Format (STRICT JSON)
 
+IMPORTANT: Replace ALL "X.X" placeholders with YOUR calculated scores based on the rubric above. Do NOT copy example values.
+
 {
   "scores": {
-    "legitimacy": 3.5,
-    "desirability": 4.0,
-    "acceptability": 3.2,
-    "feasibility": 3.8,
-    "viability": 3.5
+    "legitimacy": "X.X (your score 1.0-5.0)",
+    "desirability": "X.X (your score 1.0-5.0)",
+    "acceptability": "X.X (your score 1.0-5.0)",
+    "feasibility": "X.X (your score 1.0-5.0)",
+    "viability": "X.X (your score 1.0-5.0)"
   },
   "subScores": {
-    "legitimacy": { "painIntensity": 3.8, "marketSize": 3.5, "evidenceQuality": 3.2 },
-    "desirability": { "productMarketFit": 4.2, "differentiation": 4.0, "userDemand": 3.8 },
-    "acceptability": { "partnerReadiness": 3.5, "regulatory": 3.0, "stakeholderBuyIn": 3.1 },
-    "feasibility": { "technicalCapability": 4.0, "teamCompetence": 3.8, "resourceAvailability": 3.6 },
-    "viability": { "revenueClarity": 3.7, "unitEconomics": 3.5, "pathToProfitability": 3.3 }
+    "legitimacy": { "painIntensity": "X.X", "marketSize": "X.X", "evidenceQuality": "X.X" },
+    "desirability": { "productMarketFit": "X.X", "differentiation": "X.X", "userDemand": "X.X" },
+    "acceptability": { "partnerReadiness": "X.X", "regulatory": "X.X", "stakeholderBuyIn": "X.X" },
+    "feasibility": { "technicalCapability": "X.X", "teamCompetence": "X.X", "resourceAvailability": "X.X" },
+    "viability": { "revenueClarity": "X.X", "unitEconomics": "X.X", "pathToProfitability": "X.X" }
   },
-  "confidence": { "legitimacy": 8, "desirability": 7, "acceptability": 6, "feasibility": 8, "viability": 7 },
-  "dataQuality": { "legitimacy": 8, "desirability": 7, "acceptability": 5, "feasibility": 8, "viability": 6 },
+  "evidenceBasis": {
+    "legitimacy": { "validated": ["evidence item..."], "inferred": ["evidence item..."], "assumed": ["evidence item..."] },
+    "desirability": { "validated": [], "inferred": [], "assumed": [] },
+    "acceptability": { "validated": [], "inferred": [], "assumed": [] },
+    "feasibility": { "validated": [], "inferred": [], "assumed": [] },
+    "viability": { "validated": [], "inferred": [], "assumed": [] }
+  },
+  "confidence": { "legitimacy": "N (1-10)", "desirability": "N", "acceptability": "N", "feasibility": "N", "viability": "N" },
+  "dataQuality": { "legitimacy": "N (1-10)", "desirability": "N", "acceptability": "N", "feasibility": "N", "viability": "N" },
   "trends": { "legitimacy": "stable", "desirability": "improving", "acceptability": "stable", "feasibility": "improving", "viability": "stable" },
   "analysis": {
     "legitimacy": {
@@ -227,11 +280,11 @@ Analyze how dimensions interact:
       "impact": "impact statement"
     },
     "interactionMatrix": {
-      "legitimacy": { "desirability": 5, "acceptability": 3, "feasibility": 4, "viability": 7 },
-      "desirability": { "legitimacy": 6, "acceptability": 5, "feasibility": 8, "viability": 9 },
-      "acceptability": { "legitimacy": 4, "desirability": 3, "feasibility": 2, "viability": 6 },
-      "feasibility": { "legitimacy": 5, "desirability": 7, "acceptability": 3, "viability": 8 },
-      "viability": { "legitimacy": 6, "desirability": 8, "acceptability": 4, "feasibility": 7 }
+      "legitimacy": { "desirability": "N (-10 to +10)", "acceptability": "N", "feasibility": "N", "viability": "N" },
+      "desirability": { "legitimacy": "N", "acceptability": "N", "feasibility": "N", "viability": "N" },
+      "acceptability": { "legitimacy": "N", "desirability": "N", "feasibility": "N", "viability": "N" },
+      "feasibility": { "legitimacy": "N", "desirability": "N", "acceptability": "N", "viability": "N" },
+      "viability": { "legitimacy": "N", "desirability": "N", "acceptability": "N", "feasibility": "N" }
     }
   },
   "executiveSummary": "2-3 sentence overview",
@@ -335,6 +388,7 @@ export function validateExpressV2Assessment(data) {
   const requiredSections = [
     'scores',
     'subScores',
+    'evidenceBasis',
     'confidence',
     'dataQuality',
     'trends',
@@ -349,6 +403,32 @@ export function validateExpressV2Assessment(data) {
   for (const section of requiredSections) {
     if (!data[section]) {
       errors.push(`Missing required section: ${section}`);
+    }
+  }
+
+  // Validate evidence basis structure
+  if (data.evidenceBasis) {
+    for (const dim of DIMENSIONS) {
+      const evidence = data.evidenceBasis[dim.id];
+      if (!evidence) {
+        warnings.push(`Missing evidence basis for ${dim.name}`);
+        continue;
+      }
+      // Check for required evidence categories
+      const requiredCategories = ['validated', 'inferred', 'assumed'];
+      for (const category of requiredCategories) {
+        if (!Array.isArray(evidence[category])) {
+          warnings.push(`${dim.name} evidence basis missing ${category} array`);
+        }
+      }
+      // Warn if heavy reliance on assumptions
+      if (Array.isArray(evidence.assumed) && Array.isArray(evidence.validated)) {
+        const assumedCount = evidence.assumed.length;
+        const validatedCount = evidence.validated.length;
+        if (assumedCount > 3 && validatedCount === 0) {
+          warnings.push(`${dim.name} relies heavily on assumptions with no validated evidence`);
+        }
+      }
     }
   }
 

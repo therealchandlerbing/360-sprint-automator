@@ -65,6 +65,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model: modelName,
           max_tokens: maxTokens,
+          temperature: 0.3,  // Lower temperature for scoring consistency
           system: system || '',
           messages: messages,
         }),
