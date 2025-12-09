@@ -392,16 +392,20 @@ export function getExpressV2Prompts(formData) {
 }
 
 /**
- * Helper to coerce a value to a number (handles string numbers from LLM)
+ * Helper to coerce a value to a number (handles numeric values or string numbers from LLM)
+ * Note: While the prompt requests numeric output, LLMs occasionally return string-wrapped numbers
  * @param {any} value - Value to coerce
  * @returns {number|null} Numeric value or null if not coercible
  */
 function coerceToNumber(value) {
   if (typeof value === 'number') return value;
   if (typeof value === 'string') {
-    // Extract number from strings like "3.5" or "3.5 (your score)"
-    const match = value.match(/^(\d+\.?\d*)/);
-    if (match) return parseFloat(match[1]);
+    // Accept only strings that are valid decimal numbers (e.g., "3.5", "4", "10")
+    // This is stricter than extracting - rejects malformed strings like "3.5 (note)"
+    const trimmed = value.trim();
+    if (/^\d+(\.\d+)?$/.test(trimmed)) {
+      return parseFloat(trimmed);
+    }
   }
   return null;
 }
