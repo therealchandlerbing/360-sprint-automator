@@ -1,6 +1,6 @@
 // ============================================
 // Claude API Hook
-// Handles API calls with retry logic and timeout
+// Handles API calls with retry logic, timeout, and streaming support
 // ============================================
 
 import { useCallback } from 'react';
@@ -50,18 +50,19 @@ const isNetworkError = (err) => {
 
 /**
  * Hook to manage Claude API calls with exponential backoff retry
- * @returns {Object} API call function
+ * Supports both streaming and non-streaming modes
+ * @returns {Object} API call functions
  */
 export const useClaudeAPI = () => {
   /**
-   * Call Claude API with retry logic and client-side timeout
+   * Call Claude API with retry logic and client-side timeout (non-streaming)
    * @param {string} systemPrompt - System prompt for Claude
    * @param {string} userPrompt - User prompt for Claude
    * @param {Function} addLog - Function to add log entries
    * @returns {Promise<Object>} API response
    */
   const callClaudeAPI = useCallback(async (systemPrompt, userPrompt, addLog) => {
-    const { maxRetries, baseDelay, timeoutBaseDelay, rateLimitBaseDelay, clientTimeout } = CONFIG;
+    const { maxRetries, baseDelay, clientTimeout } = CONFIG;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       const requestStartTime = Date.now();
@@ -135,5 +136,117 @@ export const useClaudeAPI = () => {
     }
   }, []);
 
-  return { callClaudeAPI };
+  /**
+   * Call Claude API with streaming support for real-time token display
+   * @param {string} systemPrompt - System prompt for Claude
+   * @param {string} userPrompt - User prompt for Claude
+   * @param {Object} options - Streaming options
+   * @param {Function} options.onChunk - Callback for each text chunk (receives accumulated text)
+   * @param {Function} options.onComplete - Callback when streaming completes (receives final text)
+   * @param {Function} options.addLog - Function to add log entries
+   * @returns {Promise<string>} Complete response text
+   */
+  const callClaudeAPIStreaming = useCallback(async (systemPrompt, userPrompt, options = {}) => {
+    const { onChunk, onComplete, addLog } = options;
+    const { maxRetries, baseDelay, clientTimeout } = CONFIG;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const requestStartTime = Date.now();
+
+      // Create AbortController for client-side timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), clientTimeout);
+
+      // Helper to clean up timeout and calculate duration
+      const endRequest = () => {
+        clearTimeout(timeoutId);
+        return ((Date.now() - requestStartTime) / 1000).toFixed(1);
+      };
+
+      try {
+        const response = await fetch("/api/claude-stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system: systemPrompt,
+            messages: [{ role: "user", content: userPrompt }],
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const requestDuration = endRequest();
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || `API error: ${response.status}`;
+
+          // Retry on rate limit (429) or server errors (5xx)
+          if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) {
+            const delayKey = DELAY_BY_STATUS[response.status];
+            const delayBase = delayKey ? CONFIG[delayKey] : baseDelay;
+            const delay = delayBase * Math.pow(2, attempt);
+            const retryNum = attempt + 1;
+            addLog?.(`${errorMessage} (${requestDuration}s) - retry ${retryNum}/${maxRetries} after ${delay/1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        // Read the stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            break;
+          }
+
+          // Decode the chunk and append to full text
+          const chunk = decoder.decode(value, { stream: true });
+          fullText += chunk;
+
+          // Call onChunk with accumulated text
+          onChunk?.(fullText);
+        }
+
+        const requestDuration = endRequest();
+
+        // Log success message if request succeeded after retrying
+        if (attempt > 0) {
+          addLog?.(`Streaming request succeeded after ${attempt} ${attempt === 1 ? 'retry' : 'retries'} (${requestDuration}s)`);
+        }
+
+        // Call onComplete with final text
+        onComplete?.(fullText);
+
+        // Return in the same format as non-streaming for compatibility
+        return {
+          content: [{ type: 'text', text: fullText }],
+        };
+      } catch (err) {
+        const requestDuration = endRequest();
+
+        if (attempt === maxRetries) {
+          throw err;
+        }
+
+        // Network errors and timeouts - retry with standard delay
+        if (isNetworkError(err)) {
+          const delay = baseDelay * Math.pow(2, attempt);
+          const retryNum = attempt + 1;
+          const errorType = err.name === 'AbortError' ? 'Request timeout' : 'Network error';
+          addLog?.(`${errorType} (${requestDuration}s) - retry ${retryNum}/${maxRetries} after ${delay/1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw err;
+      }
+    }
+  }, []);
+
+  return { callClaudeAPI, callClaudeAPIStreaming };
 };
