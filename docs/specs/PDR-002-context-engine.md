@@ -1,7 +1,8 @@
-# PDR-001: Context Engine & Key Facts Schema
+# PDR-002: Context Engine & Hourglass Architecture
 
 **Status:** Approved for Implementation
-**Version:** 2.0 (Consolidated)
+**Document ID:** PDR-002
+**Supersedes:** PDR-001 (Architecture Notes)
 **Author:** Architecture Team
 **Created:** 2024-12-09
 **Last Updated:** 2024-12-09
@@ -848,9 +849,9 @@ For API documentation and validation, the full JSON Schema definitions are avail
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.0 | 2024-12-09 | Architecture Team | Initial Key Facts specification |
-| 2.0 | 2024-12-09 | Architecture Team | Merged with PDR-002: Added Hourglass Architecture, Context Matrix, Branch Configuration, UX specs |
+| PDR-001 | 2024-12-09 | Architecture Team | Initial Key Facts specification (superseded) |
+| PDR-002 | 2024-12-09 | Architecture Team | Consolidated Technical Spec: Hourglass Architecture, Context Matrix, Branch Configuration, UX specs |
 
 ---
 
-*Document approved for implementation.*
+*PDR-002 approved for implementation.*
