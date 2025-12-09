@@ -186,7 +186,27 @@ Conduct a comprehensive 40-question assessment across four dimensions. Use the E
 2. Calculate dimension averages to one decimal place
 3. Flag ANY score of 1 as a critical red flag 🚨
 4. Flag dimensions with 3+ scores of 2
-5. Generate "Questions to Ask Founders" for items marked INSUFFICIENT DATA`,
+5. Generate "Questions to Ask Founders" for items marked INSUFFICIENT DATA
+
+## REQUIRED: JSON SCORES OUTPUT
+
+After your complete assessment, you MUST output a JSON block with the final scores for downstream processing:
+
+\`\`\`json
+{
+  "scores": {
+    "Team": 3.5,
+    "Technology": 4.0,
+    "Management": 3.2,
+    "Commercial": 2.8
+  },
+  "overall": 3.38,
+  "recommendation": "PROCEED WITH CAUTION",
+  "red_flags_count": 2
+}
+\`\`\`
+
+This JSON block is REQUIRED for proper integration with downstream steps.`,
   userPromptTemplate: `Conduct the 40-Question Diagnostic Assessment:
 
 ---

@@ -207,7 +207,34 @@ Overall:      [███████░░░] 3.4  ✓
 2. Calculate dimension averages
 3. Apply weights: L(15%) + D(25%) + A(20%) + F(20%) + V(20%)
 4. Check each dimension against its threshold
-5. Determine GO/MAYBE/NO based on criteria`,
+5. Determine GO/MAYBE/NO based on criteria
+
+## REQUIRED: JSON SCORES OUTPUT
+
+After your complete assessment, you MUST output a JSON block with the final scores for downstream processing:
+
+\`\`\`json
+{
+  "scores": {
+    "Legitimacy": 4.0,
+    "Desirability": 3.2,
+    "Acceptability": 3.5,
+    "Feasibility": 3.8,
+    "Viability": 3.0
+  },
+  "weighted_total": 3.45,
+  "recommendation": "MAYBE",
+  "thresholds_met": {
+    "Legitimacy": true,
+    "Desirability": false,
+    "Acceptability": true,
+    "Feasibility": true,
+    "Viability": true
+  }
+}
+\`\`\`
+
+This JSON block is REQUIRED for proper integration with downstream steps.`,
   userPromptTemplate: `Conduct the 29-Question Market Maturity Assessment:
 
 ---
