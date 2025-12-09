@@ -3,7 +3,7 @@
 // Refactored modular architecture with Express Mode
 // ============================================
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import JSZip from 'jszip';
 
 // Constants
@@ -13,6 +13,7 @@ import { STEP_PROMPTS, injectDynamicValues } from './constants/prompts/index.js'
 // Utilities
 import { markdownToHtml } from './utils/markdownToHtml.js';
 import { HTML_TEMPLATE } from './utils/htmlTemplate.js';
+import { terminatePDFWorker } from './utils/fileParser.js';
 
 // Styles
 import { styles } from './styles/appStyles.js';
@@ -86,6 +87,13 @@ export default function VianeoSprintAutomator() {
   const [assessmentMode, setAssessmentMode] = useState('step-by-step'); // 'step-by-step' | 'express'
   const [showMethodologyModal, setShowMethodologyModal] = useState(false);
   const [extractingDocument, setExtractingDocument] = useState(false);
+
+  // Cleanup PDF worker on unmount to release resources
+  useEffect(() => {
+    return () => {
+      terminatePDFWorker();
+    };
+  }, []);
 
   // Express Assessment hook - handles all Express mode state and logic
   const {

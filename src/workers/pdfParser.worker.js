@@ -59,16 +59,7 @@ self.onmessage = async (event) => {
   }
 };
 
-/**
- * Handle worker errors
- */
-self.onerror = (error) => {
-  self.postMessage({
-    type: 'error',
-    error: {
-      message: error.message || 'Unknown worker error',
-      filename: error.filename,
-      lineno: error.lineno,
-    },
-  });
-};
+// Note: self.onerror is intentionally not used here because:
+// 1. Errors in onmessage are caught with try/catch and include the request ID
+// 2. Uncaught worker errors are handled by pdfWorker.onerror in fileParser.js
+//    which rejects all pending requests and recreates the worker

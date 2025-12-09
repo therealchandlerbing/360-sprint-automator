@@ -5,11 +5,8 @@
 // ============================================
 
 /**
+ * Enforcement level for Key Facts validation (used in Phase 2)
  * @typedef {'strict' | 'warn' | 'soft'} EnforcementLevel
- */
-
-/**
- * @typedef {'market' | 'financials' | 'team' | 'technology' | 'traction' | 'competition' | 'risks' | 'validation'} FactCategory
  */
 
 /**
@@ -22,7 +19,7 @@
  * @property {string[]} requiredKeyFacts - Key Facts that must be extracted for this branch
  * @property {number[]} skipSteps - Steps to skip for this branch
  * @property {string[]} focusAreas - Priority analysis areas for this branch
- * @property {Object} contextWeights - Weight multipliers for context injection
+ * @property {Record<string, number>} contextWeights - Weight multipliers for context injection (category -> weight)
  */
 
 /**
