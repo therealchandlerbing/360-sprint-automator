@@ -214,7 +214,7 @@ IMPORTANT: Replace ALL placeholder values (0.0, 0) with YOUR calculated scores b
     "viability": { "revenueClarity": 0.0, "unitEconomics": 0.0, "pathToProfitability": 0.0 }
   },
   "evidenceBasis": {
-    "legitimacy": { "validated": ["direct evidence item 1"], "inferred": ["inference 1"], "assumed": ["assumption 1"] },
+    "legitimacy": { "validated": [], "inferred": [], "assumed": [] },
     "desirability": { "validated": [], "inferred": [], "assumed": [] },
     "acceptability": { "validated": [], "inferred": [], "assumed": [] },
     "feasibility": { "validated": [], "inferred": [], "assumed": [] },
@@ -280,11 +280,11 @@ IMPORTANT: Replace ALL placeholder values (0.0, 0) with YOUR calculated scores b
       "impact": "impact statement"
     },
     "interactionMatrix": {
-      "legitimacy": { "desirability": 0, "acceptability": 0, "feasibility": 0, "viability": 0 },
-      "desirability": { "legitimacy": 0, "acceptability": 0, "feasibility": 0, "viability": 0 },
-      "acceptability": { "legitimacy": 0, "desirability": 0, "feasibility": 0, "viability": 0 },
-      "feasibility": { "legitimacy": 0, "desirability": 0, "acceptability": 0, "viability": 0 },
-      "viability": { "legitimacy": 0, "desirability": 0, "acceptability": 0, "feasibility": 0 }
+      "legitimacy": { "desirability": null, "acceptability": null, "feasibility": null, "viability": null },
+      "desirability": { "legitimacy": null, "acceptability": null, "feasibility": null, "viability": null },
+      "acceptability": { "legitimacy": null, "desirability": null, "feasibility": null, "viability": null },
+      "feasibility": { "legitimacy": null, "desirability": null, "acceptability": null, "viability": null },
+      "viability": { "legitimacy": null, "desirability": null, "acceptability": null, "feasibility": null }
     }
   },
   "executiveSummary": "2-3 sentence overview",
@@ -467,8 +467,11 @@ export function validateExpressV2Assessment(data) {
     for (const dim of DIMENSIONS) {
       const rawScore = data.scores[dim.id];
       const score = coerceToNumber(rawScore);
-      if (score === null || score < 1 || score > 5) {
-        errors.push(`${dim.name} score out of range or invalid: ${rawScore}`);
+      // Check for unreplaced placeholder (0.0)
+      if (score === 0) {
+        errors.push(`${dim.name} score appears to be an unreplaced placeholder (0.0) - must calculate actual score`);
+      } else if (score === null || score < 1 || score > 5) {
+        errors.push(`${dim.name} score out of range (must be 1.0-5.0): ${rawScore}`);
       } else {
         // Coerce the score in place for downstream use
         data.scores[dim.id] = score;
@@ -487,8 +490,11 @@ export function validateExpressV2Assessment(data) {
       for (const subDim of dim.subDimensions) {
         const rawScore = subScores[subDim.id];
         const score = coerceToNumber(rawScore);
-        if (score === null || score < 1 || score > 5) {
-          warnings.push(`${dim.name}.${subDim.name} score out of range or invalid: ${rawScore}`);
+        // Check for unreplaced placeholder (0.0)
+        if (score === 0) {
+          warnings.push(`${dim.name}.${subDim.name} appears to be unreplaced placeholder (0.0)`);
+        } else if (score === null || score < 1 || score > 5) {
+          warnings.push(`${dim.name}.${subDim.name} score out of range (must be 1.0-5.0): ${rawScore}`);
         } else {
           // Coerce the score in place for downstream use
           subScores[subDim.id] = score;
@@ -502,8 +508,10 @@ export function validateExpressV2Assessment(data) {
     for (const dim of DIMENSIONS) {
       const rawValue = data.confidence[dim.id];
       const value = coerceToNumber(rawValue);
-      if (value === null || value < 1 || value > 10) {
-        warnings.push(`${dim.name} confidence out of range (1-10): ${rawValue}`);
+      if (value === 0) {
+        warnings.push(`${dim.name} confidence appears to be unreplaced placeholder (0)`);
+      } else if (value === null || value < 1 || value > 10) {
+        warnings.push(`${dim.name} confidence out of range (must be 1-10): ${rawValue}`);
       } else {
         data.confidence[dim.id] = value;
       }
@@ -515,8 +523,10 @@ export function validateExpressV2Assessment(data) {
     for (const dim of DIMENSIONS) {
       const rawValue = data.dataQuality[dim.id];
       const value = coerceToNumber(rawValue);
-      if (value === null || value < 1 || value > 10) {
-        warnings.push(`${dim.name} dataQuality out of range (1-10): ${rawValue}`);
+      if (value === 0) {
+        warnings.push(`${dim.name} dataQuality appears to be unreplaced placeholder (0)`);
+      } else if (value === null || value < 1 || value > 10) {
+        warnings.push(`${dim.name} dataQuality out of range (must be 1-10): ${rawValue}`);
       } else {
         data.dataQuality[dim.id] = value;
       }
@@ -557,6 +567,27 @@ export function validateExpressV2Assessment(data) {
       const score = data.scores[dim.id];
       if (typeof score === 'number' && score < dim.threshold) {
         warnings.push(`${dim.name} score ${score.toFixed(1)} is below threshold ${dim.threshold}`);
+      }
+    }
+  }
+
+  // Validate interaction matrix values are in range (-10 to +10) and not null placeholders
+  if (data.crossDimensionalAnalysis?.interactionMatrix) {
+    const matrix = data.crossDimensionalAnalysis.interactionMatrix;
+    for (const fromDim of DIMENSIONS) {
+      const row = matrix[fromDim.id];
+      if (!row) {
+        warnings.push(`Missing interaction matrix row for ${fromDim.name}`);
+        continue;
+      }
+      for (const toDim of DIMENSIONS) {
+        if (fromDim.id === toDim.id) continue; // Skip diagonal
+        const value = row[toDim.id];
+        if (value === null) {
+          warnings.push(`Interaction ${fromDim.name}→${toDim.name} is unreplaced placeholder (null)`);
+        } else if (typeof value !== 'number' || value < -10 || value > 10) {
+          warnings.push(`Interaction ${fromDim.name}→${toDim.name} out of range (must be -10 to +10): ${value}`);
+        }
       }
     }
   }
