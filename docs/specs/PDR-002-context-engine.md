@@ -145,7 +145,7 @@ type FactCategory = 'market' | 'financials' | 'team' | 'technology' |
 interface KeyFactProvenance {
   documentName?: string;      // e.g., "pitch_deck.pdf"
   pageNumber?: number;        // e.g., 12
-  textSnippet?: string;       // ~50 chars surrounding context for verification
+  textSnippet?: string;       // max 100 chars surrounding context for verification
   extractionMethod: 'ai' | 'pattern' | 'user';
 }
 
@@ -224,7 +224,7 @@ interface BranchConfig {
   skipSteps: number[];
 }
 
-// Implementation: src/config/branches.js
+// Implementation: src/config/branches.ts
 const BRANCHES: Record<string, BranchConfig> = {
   '360SIS': {
     id: '360SIS',
@@ -364,30 +364,59 @@ function buildStepContext(
 }
 ```
 
-### 3.3 Score Extraction Functions
+### 3.3 Score Extraction Strategy
 
-```typescript
-// Extract only scores from Step 2 (40Q Diagnostic)
-function extractStep2Scores(step2Output: string): string {
-  // Pattern match the scores table
-  const scoresPattern = /\| Dimension \| Score \|[\s\S]*?\|[-\s|]+\|[\s\S]*?(?=\n\n|\n#|$)/;
-  const match = step2Output.match(scoresPattern);
+**Recommended Approach:** Instead of brittle regex extraction from markdown tables, instruct the LLM to output scores in a dedicated JSON block within its response.
 
-  if (match) {
-    return `## 40Q Diagnostic Scores\n\n${match[0]}`;
-  }
+**Prompt Enhancement for Steps 2 & 3:**
 
-  // Fallback: extract individual dimension scores
-  return extractDimensionScores(step2Output, ['Team', 'Technology', 'Management', 'Commercial']);
-}
+```markdown
+After your analysis, output a JSON block with the scores:
 
-// Extract only scores from Step 3 (Market Maturity)
-function extractStep3Scores(step3Output: string): string {
-  return extractDimensionScores(step3Output, [
-    'Legitimacy', 'Desirability', 'Acceptability', 'Feasibility', 'Viability'
-  ]);
+```json
+{
+  "scores": {
+    "Team": 4.5,
+    "Technology": 4.0,
+    "Management": 3.5,
+    "Commercial": 3.0
+  },
+  "overall": 3.75
 }
 ```
+```
+
+**Extraction Function:**
+
+```typescript
+// Extract scores from JSON block in step output
+function extractScoresFromOutput(stepOutput: string): Record<string, number> | null {
+  // Look for JSON code block
+  const jsonBlockMatch = stepOutput.match(/```json\s*([\s\S]*?)\s*```/);
+
+  if (jsonBlockMatch) {
+    try {
+      const parsed = JSON.parse(jsonBlockMatch[1]);
+      return parsed.scores || parsed;
+    } catch (e) {
+      console.warn('Failed to parse scores JSON block:', e);
+    }
+  }
+
+  return null;
+}
+
+// Format scores for context injection
+function formatScoresForContext(scores: Record<string, number>, label: string): string {
+  const lines = Object.entries(scores)
+    .map(([dimension, score]) => `- ${dimension}: ${score}/5.0`)
+    .join('\n');
+
+  return `## ${label}\n\n${lines}`;
+}
+```
+
+This approach is more robust than regex-based table parsing and less prone to breaking when LLM output formatting varies.
 
 ### 3.4 AI Summary Generation (Steps 4-9)
 
@@ -698,7 +727,15 @@ self.onmessage = async (event) => {
 
     self.postMessage({ type: 'complete', text: fullText, filename });
   } catch (error) {
-    self.postMessage({ type: 'error', error: error.message });
+    // Include stack trace for better debugging
+    self.postMessage({
+      type: 'error',
+      error: {
+        message: error.message,
+        stack: error.stack,
+        filename
+      }
+    });
   }
 };
 ```
@@ -772,7 +809,7 @@ For API documentation and validation, the full JSON Schema definitions are avail
   "$id": "https://vianeo.io/schemas/key-fact.json",
   "title": "KeyFact",
   "type": "object",
-  "required": ["key", "value", "category", "sourceStepId", "confidence", "metadata"],
+  "required": ["key", "value", "displayValue", "category", "sourceStepId", "confidence", "metadata"],
   "properties": {
     "key": {
       "type": "string",
@@ -820,7 +857,15 @@ For API documentation and validation, the full JSON Schema definitions are avail
         "required": ["timestamp", "changedBy"],
         "properties": {
           "timestamp": { "type": "string", "format": "date-time" },
-          "previousValue": {},
+          "previousValue": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "number" },
+              { "type": "boolean" },
+              { "type": "object" },
+              { "type": "null" }
+            ]
+          },
           "changedBy": { "type": "string", "enum": ["ai", "user", "sync", "conflict_resolution"] },
           "changeReason": { "type": "string" }
         }
