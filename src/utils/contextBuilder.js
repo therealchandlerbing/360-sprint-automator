@@ -197,17 +197,14 @@ const getScoresContext = (stepOutput, label) => {
 let scoreExtractorModule = null;
 const getScoreExtractorFunctions = () => {
   if (!scoreExtractorModule) {
-    try {
-      // This will be populated after scoreExtractor.js is created
-      scoreExtractorModule = {
-        extractScoresFromOutput: null,
-        formatScoresForContext: null,
-      };
-    } catch (e) {
-      console.warn('Score extractor not available:', e);
-    }
+    // This will be populated via setScoreExtractorFunctions after scoreExtractor.js is loaded
+    // Must be initialized via setScoreExtractorFunctions before use
+    scoreExtractorModule = {
+      extractScoresFromOutput: null,
+      formatScoresForContext: null,
+    };
   }
-  return scoreExtractorModule || {};
+  return scoreExtractorModule;
 };
 
 // Setter to inject score extractor functions
@@ -273,7 +270,7 @@ export const buildStepContext = (stepId, projectState, options = {}) => {
 
   const strategy = CONTEXT_STRATEGY[stepId];
   if (!strategy) {
-    console.warn(`No context strategy defined for step ${stepId}`);
+    console.warn(`No context strategy defined for step ${stepId}. Valid steps are: ${Object.keys(CONTEXT_STRATEGY).join(', ')}`);
     return {};
   }
 

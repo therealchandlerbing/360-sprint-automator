@@ -69,7 +69,6 @@ const createKeyFact = ({
 /**
  * Add history entry when a fact is updated
  * @param {Object} fact - Existing fact
- * @param {*} newValue - New value
  * @param {ChangeSource} changedBy - Who made the change
  * @param {string} [changeReason] - Optional reason
  * @returns {Object} History entry

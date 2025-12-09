@@ -3,8 +3,6 @@
 // Generate AI summary of Steps 4-9 for Step 10 context compression
 // ============================================
 
-import { STEPS } from '../constants/steps.js';
-
 /**
  * System prompt for generating the Steps 4-9 summary
  * This compresses ~15K tokens of deep dive analysis into ~2.5K tokens
