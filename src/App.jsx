@@ -14,6 +14,27 @@ import { STEP_PROMPTS, injectDynamicValues } from './constants/prompts/index.js'
 import { markdownToHtml } from './utils/markdownToHtml.js';
 import { HTML_TEMPLATE } from './utils/htmlTemplate.js';
 import { terminatePDFWorker } from './utils/fileParser.js';
+import {
+  buildStepContext,
+  buildLegacyContext,
+  setStepsSummary,
+  setScoreExtractorFunctions,
+} from './utils/contextBuilder.js';
+import {
+  extractScoresFromOutput,
+  formatScoresForContext,
+} from './utils/scoreExtractor.js';
+import {
+  generateStepsSummary,
+  canGenerateSummary,
+  createFallbackSummary,
+} from './utils/summaryGenerator.js';
+
+// Stores
+import { useKeyFactsStore, parseKeyFactsFromOutput } from './stores/keyFactsStore.js';
+
+// Branch configuration
+import { BRANCHES } from './config/branches.js';
 
 // Styles
 import { styles } from './styles/appStyles.js';
@@ -77,6 +98,17 @@ export default function VianeoSprintAutomator() {
 
   // Claude API hook
   const { callClaudeAPI } = useClaudeAPI();
+
+  // Key Facts store (PDR-002)
+  const {
+    bulkSetFacts,
+    clearFacts,
+  } = useKeyFactsStore();
+
+  // Initialize score extractor functions for context builder
+  useEffect(() => {
+    setScoreExtractorFunctions(extractScoresFromOutput, formatScoresForContext);
+  }, []);
 
   // Local state
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -188,30 +220,52 @@ export default function VianeoSprintAutomator() {
     }
   }, []);
 
-  // Build context for step prompts
+  // Build context for step prompts using Context Matrix (PDR-002)
   const buildContext = useCallback((stepId) => {
-    const context = {};
+    // Get Key Facts store instance for context building
+    const keyFactsStore = useKeyFactsStore.getState();
 
-    // Always include Step 0 for steps 1+
-    if (stepId >= 1 && stepOutputs[0]) context.STEP_0_OUTPUT = stepOutputs[0];
-    if (stepId >= 3 && stepOutputs[2]) context.STEP_2_OUTPUT = stepOutputs[2];
-    if (stepId >= 4 && stepOutputs[3]) context.STEP_3_OUTPUT = stepOutputs[3];
-    if (stepId >= 5 && stepOutputs[4]) context.STEP_4_OUTPUT = stepOutputs[4];
-    if (stepId >= 6 && stepOutputs[5]) context.STEP_5_OUTPUT = stepOutputs[5];
-    if (stepId >= 7 && stepOutputs[6]) context.STEP_6_OUTPUT = stepOutputs[6];
-    if (stepId >= 9 && stepOutputs[8]) context.STEP_8_OUTPUT = stepOutputs[8];
-
-    // Steps 10-12: aggregate ALL prior outputs
+    // Use new Context Matrix strategy for steps 10+
+    // For earlier steps, use legacy format for backward compatibility with existing prompts
     if (stepId >= 10) {
-      context.ALL_PRIOR_OUTPUTS = Object.entries(stepOutputs)
-        .filter(([id]) => parseInt(id) < stepId)
-        .sort(([a], [b]) => parseInt(a) - parseInt(b))
-        .map(([id, output]) => `## Step ${id}: ${STEPS[parseInt(id)].name}\n\n${output}`)
-        .join('\n\n---\n\n');
+      const projectState = {
+        stepOutputs,
+        inputContent,
+        organizationBranch,
+      };
+
+      const newContext = buildStepContext(stepId, projectState, {
+        keyFactsStore,
+        branchesConfig: BRANCHES,
+      });
+
+      // Map new context keys to legacy placeholder names
+      const context = {};
+      if (newContext.STEP_0_OUTPUT) context.STEP_0_OUTPUT = newContext.STEP_0_OUTPUT;
+      if (newContext.KEY_FACTS) context.KEY_FACTS = newContext.KEY_FACTS;
+      if (newContext.STEPS_4_9_SUMMARY) context.STEPS_4_9_SUMMARY = newContext.STEPS_4_9_SUMMARY;
+      if (newContext.ALL_CONTEXT) context.ALL_PRIOR_OUTPUTS = newContext.ALL_CONTEXT;
+
+      // Include individual step outputs as needed
+      if (newContext.STEP_10_OUTPUT) context.STEP_10_OUTPUT = newContext.STEP_10_OUTPUT;
+      if (newContext.STEP_11_OUTPUT) context.STEP_11_OUTPUT = newContext.STEP_11_OUTPUT;
+
+      return context;
     }
 
-    return context;
-  }, [stepOutputs]);
+    // Use legacy context builder for steps 0-9
+    const legacyContext = buildLegacyContext(stepId, stepOutputs);
+
+    // Add Key Facts for steps that use them (4, 8, 9)
+    if ([4, 8, 9].includes(stepId)) {
+      const keyFactsContext = keyFactsStore.getFactsAsContext();
+      if (keyFactsContext) {
+        legacyContext.KEY_FACTS = keyFactsContext;
+      }
+    }
+
+    return legacyContext;
+  }, [stepOutputs, inputContent, organizationBranch]);
 
   // Process current step
   const processStep = useCallback(async () => {
@@ -226,6 +280,21 @@ export default function VianeoSprintAutomator() {
     addLog(`Starting Step ${currentStep}: ${STEPS[currentStep].name}`);
 
     try {
+      // Pre-Step 10: Generate summary of Steps 4-9 (PDR-002 Hourglass Architecture)
+      if (currentStep === 10 && canGenerateSummary(stepOutputs)) {
+        addLog('Generating summary of Steps 4-9 for context compression...');
+        try {
+          const summary = await generateStepsSummary(stepOutputs, callClaudeAPI, addLog);
+          setStepsSummary(summary);
+          addLog('Summary generated successfully');
+        } catch (summaryErr) {
+          console.warn('Summary generation failed, using fallback:', summaryErr);
+          addLog('Using fallback summary (AI generation failed)');
+          const fallbackSummary = createFallbackSummary(stepOutputs);
+          setStepsSummary(fallbackSummary);
+        }
+      }
+
       const promptConfig = STEP_PROMPTS[currentStep];
       const context = buildContext(currentStep);
 
@@ -248,6 +317,19 @@ export default function VianeoSprintAutomator() {
 
       const output = data.content.filter(item => item.type === "text").map(item => item.text).join("\n");
       setStepOutputs(prev => ({ ...prev, [currentStep]: output }));
+
+      // Post-Step 0: Extract Key Facts (PDR-002)
+      if (currentStep === 0) {
+        addLog('Extracting Key Facts from Executive Brief...');
+        const extractedFacts = parseKeyFactsFromOutput(output);
+        if (extractedFacts && Object.keys(extractedFacts).length > 0) {
+          bulkSetFacts(extractedFacts, 0, 'validation');
+          addLog(`Extracted ${Object.keys(extractedFacts).length} Key Facts`);
+        } else {
+          addLog('No Key Facts JSON block found in output');
+        }
+      }
+
       addLog(`Step ${currentStep} complete!`);
     } catch (err) {
       setError(`Error: ${err.message}`);
@@ -255,7 +337,7 @@ export default function VianeoSprintAutomator() {
     } finally {
       setIsProcessing(false);
     }
-  }, [currentStep, inputContent, organizationBranch, buildContext, addLog, callClaudeAPI, setStepOutputs]);
+  }, [currentStep, inputContent, organizationBranch, stepOutputs, buildContext, addLog, callClaudeAPI, setStepOutputs, bulkSetFacts]);
 
   // Download single output as MD
   const downloadOutput = useCallback((stepId) => {
@@ -410,8 +492,10 @@ export default function VianeoSprintAutomator() {
       setUploadedFiles([]);
       setProcessingLog([]);
       setError(null);
+      // Clear Key Facts store (PDR-002)
+      clearFacts();
     }
-  }, [clearSession]);
+  }, [clearSession, clearFacts]);
 
   // Branch selection handler
   const handleBranchSelect = useCallback((branchId) => {

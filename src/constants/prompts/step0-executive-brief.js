@@ -215,7 +215,39 @@ Transform raw application materials into a structured Executive Brief. You MUST 
    - No prototype = MEDIUM red flag
    - Part-time founders = MEDIUM red flag
    - No defined market size = MEDIUM red flag
-   - All claims [ASSUMED] = HIGH red flag`,
+   - All claims [ASSUMED] = HIGH red flag
+
+## KEY FACTS EXTRACTION (REQUIRED)
+
+After generating the Executive Brief, you MUST output a JSON block with extracted Key Facts for downstream processing. Include ONLY facts that have supporting evidence.
+
+Output format:
+\`\`\`json
+{
+  "key_facts": {
+    "company_name": { "value": "...", "confidence": 0.95, "category": "team" },
+    "founding_year": { "value": 2023, "confidence": 0.9, "category": "team" },
+    "team_size": { "value": "...", "confidence": 0.8, "category": "team" },
+    "problem_statement": { "value": "...", "confidence": 0.9, "category": "validation" },
+    "solution_description": { "value": "...", "confidence": 0.9, "category": "technology" },
+    "target_market": { "value": "...", "confidence": 0.8, "category": "market" },
+    "market_size_tam": { "value": "...", "confidence": 0.7, "category": "market" },
+    "customer_count": { "value": "...", "confidence": 0.85, "category": "traction" },
+    "revenue": { "value": "...", "confidence": 0.8, "category": "financials" },
+    "funding_raised": { "value": "...", "confidence": 0.85, "category": "financials" },
+    "trl_level": { "value": 4, "confidence": 0.7, "category": "technology" },
+    "maturity_stage": { "value": "PROOF", "confidence": 0.8, "category": "validation" }
+  }
+}
+\`\`\`
+
+Confidence scoring:
+- 0.9-1.0: Explicitly stated in documents with clear evidence
+- 0.7-0.9: Clearly implied or derived from multiple data points
+- 0.5-0.7: Reasonable inference with some uncertainty
+- Below 0.5: Do not include (too uncertain)
+
+Only include facts you can extract with reasonable confidence. Omit any fields where data is not available.`,
   userPromptTemplate: `Extract an Executive Brief from these materials:
 
 ---
