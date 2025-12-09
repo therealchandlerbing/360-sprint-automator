@@ -131,6 +131,9 @@ export default async function handler(req, res) {
       system: system || '',
       messages: messages,
       maxTokens: maxTokens,
+      // Temperature 0.3: Balances consistent scoring (lower = more deterministic)
+      // with varied analysis text (higher = more creative). Used for all assessment tasks.
+      temperature: 0.3,
       abortSignal: controller.signal,
     });
 
