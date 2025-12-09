@@ -3,7 +3,7 @@
 // Synthesizes all 13 VIANEO Framework steps
 // ============================================
 
-import { injectDynamicValues } from './prompts.js';
+import { injectDynamicValues } from './prompts/index.js';
 
 /**
  * Express Mode System Prompt
