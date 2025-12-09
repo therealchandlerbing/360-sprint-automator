@@ -10,9 +10,25 @@
 
 ---
 
+## Scope
+
+> **This PDR applies to Step-by-Step Assessment Mode only.**
+>
+> Express Mode (single API call) has a fundamentally different architecture that does not require the Context Engine or Hourglass compression. Express Mode processes all analysis in a single prompt without inter-step context accumulation.
+
+| Feature | Step-by-Step Mode | Express Mode |
+|---------|-------------------|--------------|
+| Context Engine | ✅ Required | ❌ Not applicable |
+| Key Facts Schema | ✅ Required | ⚠️ Optional (structured output) |
+| Hourglass Architecture | ✅ Required | ❌ Not applicable |
+| Branch Configuration | ✅ Required | ❌ Not currently used |
+| Rich Text Editor | ✅ Required | ⚠️ Optional |
+
+---
+
 ## Executive Summary
 
-This PDR defines the technical architecture for a **Context Engine** that solves three critical problems in multi-step LLM workflows:
+This PDR defines the technical architecture for a **Context Engine** that solves three critical problems in **Step-by-Step** multi-step LLM workflows:
 
 1. **Token Overflow:** Steps 10-12 would consume ~40K tokens of accumulated context, causing quality degradation
 2. **Information Loss:** Summarization loses specific metrics needed for final assessment
