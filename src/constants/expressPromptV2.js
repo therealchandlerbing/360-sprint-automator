@@ -196,32 +196,32 @@ Analyze how dimensions interact:
 
 ## Required Output Format (STRICT JSON)
 
-IMPORTANT: Replace ALL "X.X" placeholders with YOUR calculated scores based on the rubric above. Do NOT copy example values.
+IMPORTANT: Replace ALL placeholder values (0.0, 0) with YOUR calculated scores based on the rubric above. All scores must be NUMERIC (not strings). Do NOT copy example values - calculate each score independently.
 
 {
   "scores": {
-    "legitimacy": "X.X (your score 1.0-5.0)",
-    "desirability": "X.X (your score 1.0-5.0)",
-    "acceptability": "X.X (your score 1.0-5.0)",
-    "feasibility": "X.X (your score 1.0-5.0)",
-    "viability": "X.X (your score 1.0-5.0)"
+    "legitimacy": 0.0,
+    "desirability": 0.0,
+    "acceptability": 0.0,
+    "feasibility": 0.0,
+    "viability": 0.0
   },
   "subScores": {
-    "legitimacy": { "painIntensity": "X.X", "marketSize": "X.X", "evidenceQuality": "X.X" },
-    "desirability": { "productMarketFit": "X.X", "differentiation": "X.X", "userDemand": "X.X" },
-    "acceptability": { "partnerReadiness": "X.X", "regulatory": "X.X", "stakeholderBuyIn": "X.X" },
-    "feasibility": { "technicalCapability": "X.X", "teamCompetence": "X.X", "resourceAvailability": "X.X" },
-    "viability": { "revenueClarity": "X.X", "unitEconomics": "X.X", "pathToProfitability": "X.X" }
+    "legitimacy": { "painIntensity": 0.0, "marketSize": 0.0, "evidenceQuality": 0.0 },
+    "desirability": { "productMarketFit": 0.0, "differentiation": 0.0, "userDemand": 0.0 },
+    "acceptability": { "partnerReadiness": 0.0, "regulatory": 0.0, "stakeholderBuyIn": 0.0 },
+    "feasibility": { "technicalCapability": 0.0, "teamCompetence": 0.0, "resourceAvailability": 0.0 },
+    "viability": { "revenueClarity": 0.0, "unitEconomics": 0.0, "pathToProfitability": 0.0 }
   },
   "evidenceBasis": {
-    "legitimacy": { "validated": ["evidence item..."], "inferred": ["evidence item..."], "assumed": ["evidence item..."] },
+    "legitimacy": { "validated": ["direct evidence item 1"], "inferred": ["inference 1"], "assumed": ["assumption 1"] },
     "desirability": { "validated": [], "inferred": [], "assumed": [] },
     "acceptability": { "validated": [], "inferred": [], "assumed": [] },
     "feasibility": { "validated": [], "inferred": [], "assumed": [] },
     "viability": { "validated": [], "inferred": [], "assumed": [] }
   },
-  "confidence": { "legitimacy": "N (1-10)", "desirability": "N", "acceptability": "N", "feasibility": "N", "viability": "N" },
-  "dataQuality": { "legitimacy": "N (1-10)", "desirability": "N", "acceptability": "N", "feasibility": "N", "viability": "N" },
+  "confidence": { "legitimacy": 0, "desirability": 0, "acceptability": 0, "feasibility": 0, "viability": 0 },
+  "dataQuality": { "legitimacy": 0, "desirability": 0, "acceptability": 0, "feasibility": 0, "viability": 0 },
   "trends": { "legitimacy": "stable", "desirability": "improving", "acceptability": "stable", "feasibility": "improving", "viability": "stable" },
   "analysis": {
     "legitimacy": {
@@ -280,11 +280,11 @@ IMPORTANT: Replace ALL "X.X" placeholders with YOUR calculated scores based on t
       "impact": "impact statement"
     },
     "interactionMatrix": {
-      "legitimacy": { "desirability": "N (-10 to +10)", "acceptability": "N", "feasibility": "N", "viability": "N" },
-      "desirability": { "legitimacy": "N", "acceptability": "N", "feasibility": "N", "viability": "N" },
-      "acceptability": { "legitimacy": "N", "desirability": "N", "feasibility": "N", "viability": "N" },
-      "feasibility": { "legitimacy": "N", "desirability": "N", "acceptability": "N", "viability": "N" },
-      "viability": { "legitimacy": "N", "desirability": "N", "acceptability": "N", "feasibility": "N" }
+      "legitimacy": { "desirability": 0, "acceptability": 0, "feasibility": 0, "viability": 0 },
+      "desirability": { "legitimacy": 0, "acceptability": 0, "feasibility": 0, "viability": 0 },
+      "acceptability": { "legitimacy": 0, "desirability": 0, "feasibility": 0, "viability": 0 },
+      "feasibility": { "legitimacy": 0, "desirability": 0, "acceptability": 0, "viability": 0 },
+      "viability": { "legitimacy": 0, "desirability": 0, "acceptability": 0, "feasibility": 0 }
     }
   },
   "executiveSummary": "2-3 sentence overview",
@@ -346,6 +346,20 @@ Provide a DEEP, MULTI-LAYERED analysis using the VIANEO Framework. For each of t
 10. Key metrics to track for this dimension
 11. Competitive positioning
 
+## CRITICAL: Evidence Tracking Required
+
+For EACH dimension, you MUST categorize ALL claims in the evidenceBasis object:
+- **validated**: Direct evidence provided (revenue numbers, customer data, signed contracts, pilot results)
+- **inferred**: Reasonable inference from context (market size from industry reports, team capability from backgrounds)
+- **assumed**: No direct evidence, using industry norms or reasonable assumptions
+
+**SCORING IMPACT**: Heavy reliance on [ASSUMED] evidence MUST reduce the dimension score by 0.5-1.0 points.
+
+## CRITICAL: Use Full Score Range
+
+- Scores BELOW 3.0: Pre-revenue, no validation, regulatory uncertainty, solo founder, founder intuition only
+- Scores ABOVE 4.5: 100K+ users, $1M+ ARR, signed partnerships, multiple exits, extensive market research
+
 Additionally, provide:
 - Cross-dimensional analysis (synergies, tradeoffs, dependencies, bottleneck)
 - Interaction matrix showing how dimensions influence each other
@@ -353,7 +367,7 @@ Additionally, provide:
 - Top strengths, critical risks, immediate actions
 - Resource priorities (3-4 prioritized areas where resources should be allocated)
 
-Return ONLY valid JSON matching the schema. Be rigorous - if evidence is missing, score lower and note it. Do NOT inflate scores based on assumptions.`;
+Return ONLY valid JSON matching the schema. All scores must be NUMERIC values (not strings). Be rigorous - if evidence is missing, score lower and note it. Do NOT inflate scores based on assumptions.`;
 
 /**
  * Get Express V2 prompts with dynamic values injected
@@ -378,6 +392,21 @@ export function getExpressV2Prompts(formData) {
 }
 
 /**
+ * Helper to coerce a value to a number (handles string numbers from LLM)
+ * @param {any} value - Value to coerce
+ * @returns {number|null} Numeric value or null if not coercible
+ */
+function coerceToNumber(value) {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    // Extract number from strings like "3.5" or "3.5 (your score)"
+    const match = value.match(/^(\d+\.?\d*)/);
+    if (match) return parseFloat(match[1]);
+  }
+  return null;
+}
+
+/**
  * Validate Express V2 assessment output
  */
 export function validateExpressV2Assessment(data) {
@@ -397,7 +426,8 @@ export function validateExpressV2Assessment(data) {
     'executiveSummary',
     'topStrengths',
     'criticalRisks',
-    'immediateActions'
+    'immediateActions',
+    'resourcePriority'
   ];
 
   for (const section of requiredSections) {
@@ -435,9 +465,13 @@ export function validateExpressV2Assessment(data) {
   // Validate dimension scores are in range (1-5)
   if (data.scores) {
     for (const dim of DIMENSIONS) {
-      const score = data.scores[dim.id];
-      if (score === undefined || score < 1 || score > 5) {
-        errors.push(`${dim.name} score out of range: ${score}`);
+      const rawScore = data.scores[dim.id];
+      const score = coerceToNumber(rawScore);
+      if (score === null || score < 1 || score > 5) {
+        errors.push(`${dim.name} score out of range or invalid: ${rawScore}`);
+      } else {
+        // Coerce the score in place for downstream use
+        data.scores[dim.id] = score;
       }
     }
   }
@@ -451,9 +485,67 @@ export function validateExpressV2Assessment(data) {
         continue;
       }
       for (const subDim of dim.subDimensions) {
-        const score = subScores[subDim.id];
-        if (score === undefined || score < 1 || score > 5) {
-          warnings.push(`${dim.name}.${subDim.name} score out of range: ${score}`);
+        const rawScore = subScores[subDim.id];
+        const score = coerceToNumber(rawScore);
+        if (score === null || score < 1 || score > 5) {
+          warnings.push(`${dim.name}.${subDim.name} score out of range or invalid: ${rawScore}`);
+        } else {
+          // Coerce the score in place for downstream use
+          subScores[subDim.id] = score;
+        }
+      }
+    }
+  }
+
+  // Validate confidence scores are in range (1-10)
+  if (data.confidence) {
+    for (const dim of DIMENSIONS) {
+      const rawValue = data.confidence[dim.id];
+      const value = coerceToNumber(rawValue);
+      if (value === null || value < 1 || value > 10) {
+        warnings.push(`${dim.name} confidence out of range (1-10): ${rawValue}`);
+      } else {
+        data.confidence[dim.id] = value;
+      }
+    }
+  }
+
+  // Validate data quality scores are in range (1-10)
+  if (data.dataQuality) {
+    for (const dim of DIMENSIONS) {
+      const rawValue = data.dataQuality[dim.id];
+      const value = coerceToNumber(rawValue);
+      if (value === null || value < 1 || value > 10) {
+        warnings.push(`${dim.name} dataQuality out of range (1-10): ${rawValue}`);
+      } else {
+        data.dataQuality[dim.id] = value;
+      }
+    }
+  }
+
+  // Validate trends have valid values
+  if (data.trends) {
+    const validTrends = ['improving', 'stable', 'declining'];
+    for (const dim of DIMENSIONS) {
+      const trend = data.trends[dim.id];
+      if (!validTrends.includes(trend)) {
+        warnings.push(`${dim.name} trend invalid (must be improving/stable/declining): ${trend}`);
+      }
+    }
+  }
+
+  // Validate analysis structure for each dimension
+  if (data.analysis) {
+    const requiredAnalysisFields = ['strengths', 'risks', 'recommendations'];
+    for (const dim of DIMENSIONS) {
+      const analysis = data.analysis[dim.id];
+      if (!analysis) {
+        warnings.push(`Missing analysis for ${dim.name}`);
+        continue;
+      }
+      for (const field of requiredAnalysisFields) {
+        if (!Array.isArray(analysis[field]) || analysis[field].length === 0) {
+          warnings.push(`${dim.name} analysis missing or empty: ${field}`);
         }
       }
     }
@@ -463,8 +555,21 @@ export function validateExpressV2Assessment(data) {
   if (data.scores) {
     for (const dim of DIMENSIONS) {
       const score = data.scores[dim.id];
-      if (score < dim.threshold) {
-        warnings.push(`${dim.name} score ${score} is below threshold ${dim.threshold}`);
+      if (typeof score === 'number' && score < dim.threshold) {
+        warnings.push(`${dim.name} score ${score.toFixed(1)} is below threshold ${dim.threshold}`);
+      }
+    }
+  }
+
+  // Check for score clustering (anti-pattern from original audit)
+  if (data.scores) {
+    const scores = DIMENSIONS.map(dim => data.scores[dim.id]).filter(s => typeof s === 'number');
+    if (scores.length === 5) {
+      const min = Math.min(...scores);
+      const max = Math.max(...scores);
+      const range = max - min;
+      if (range < 0.5 && min >= 3.0 && max <= 4.0) {
+        warnings.push(`Score clustering detected: all scores between ${min.toFixed(1)}-${max.toFixed(1)}. Consider if differentiation is appropriate.`);
       }
     }
   }

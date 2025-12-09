@@ -31,6 +31,7 @@ function generateDimensionPage(dimension, data, pageNumber, totalPages) {
   const confidence = data.confidence?.[dimension.id];
   const dataQuality = data.dataQuality?.[dimension.id];
   const trend = data.trends?.[dimension.id];
+  const evidenceBasis = data.evidenceBasis?.[dimension.id] || {};
   const meetsThreshold = score >= dimension.threshold;
 
   return `
@@ -128,6 +129,38 @@ function generateDimensionPage(dimension, data, pageNumber, totalPages) {
           </ul>
         </div>
       </div>
+
+      ${(evidenceBasis.validated?.length > 0 || evidenceBasis.inferred?.length > 0 || evidenceBasis.assumed?.length > 0) ? `
+      <div class="evidence-section">
+        <h3 class="section-title">📋 Evidence Basis</h3>
+        <div class="evidence-grid">
+          ${evidenceBasis.validated?.length > 0 ? `
+          <div class="evidence-column validated">
+            <h4 class="evidence-title"><span class="evidence-icon">✓</span> Validated</h4>
+            <ul class="evidence-list">
+              ${evidenceBasis.validated.map(e => `<li>${escapeHtml(e)}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+          ${evidenceBasis.inferred?.length > 0 ? `
+          <div class="evidence-column inferred">
+            <h4 class="evidence-title"><span class="evidence-icon">~</span> Inferred</h4>
+            <ul class="evidence-list">
+              ${evidenceBasis.inferred.map(e => `<li>${escapeHtml(e)}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+          ${evidenceBasis.assumed?.length > 0 ? `
+          <div class="evidence-column assumed">
+            <h4 class="evidence-title"><span class="evidence-icon">?</span> Assumed</h4>
+            <ul class="evidence-list">
+              ${evidenceBasis.assumed.map(e => `<li>${escapeHtml(e)}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+        </div>
+      </div>
+      ` : ''}
 
       ${analysis.timeline ? `
       <div class="timeline-section">
@@ -914,6 +947,90 @@ export function generateHTMLReport(assessmentData) {
 
     .recommendations .analysis-list li { color: #1E40AF; }
     .recommendations .analysis-list li::before { color: #3B82F6; }
+
+    /* Evidence Basis */
+    .evidence-section {
+      margin-bottom: 16px;
+    }
+
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .evidence-column {
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 8px;
+    }
+
+    .evidence-column.validated {
+      background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
+      border: 1px solid #A7F3D0;
+    }
+
+    .evidence-column.inferred {
+      background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+      border: 1px solid #BFDBFE;
+    }
+
+    .evidence-column.assumed {
+      background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+      border: 1px solid #FCD34D;
+    }
+
+    .evidence-title {
+      font-size: 9px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .validated .evidence-title { color: #059669; }
+    .inferred .evidence-title { color: #2563EB; }
+    .assumed .evidence-title { color: #D97706; }
+
+    .evidence-icon {
+      font-size: 10px;
+    }
+
+    .evidence-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .evidence-list li {
+      font-size: 8px;
+      padding: 3px 0;
+      padding-left: 10px;
+      position: relative;
+      line-height: 1.4;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .evidence-list li:last-child {
+      border-bottom: none;
+    }
+
+    .evidence-list li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      font-size: 8px;
+    }
+
+    .validated .evidence-list li { color: #065F46; }
+    .validated .evidence-list li::before { color: #10B981; }
+
+    .inferred .evidence-list li { color: #1E40AF; }
+    .inferred .evidence-list li::before { color: #3B82F6; }
+
+    .assumed .evidence-list li { color: #92400E; }
+    .assumed .evidence-list li::before { color: #F59E0B; }
 
     /* Timeline */
     .timeline-section {
